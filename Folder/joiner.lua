@@ -2,12 +2,11 @@ local TeleportService = game:GetService("TeleportService")
 local StarterGui = game:GetService("StarterGui")
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
-
 local player = Players.LocalPlayer
 local placeId = game.PlaceId
 local currentJobId = game.JobId
 
-local webhookUrl = "webhook"
+local webhookUrl = _G.webhookUrl or ""
 
 local jobList = {
     "f9d9e3de-1639-4c18-96ea-4458cc43f890",
@@ -62,15 +61,15 @@ end
 
 local function sendWebhook(title, fields, color)
     local req = (syn and syn.request) or http_request or request
-    if not req then return end
+    if not req or webhookUrl == "" then return end
 
     local body = {
-        embeds = {{
+        embeds = { {
             title = title,
             color = color or 65280,
             fields = fields,
             timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
-        }}
+        } }
     }
 
     pcall(function()
@@ -89,20 +88,20 @@ while task.wait(1.5) do
             sendWebhook("Skipping Job", {
                 { name = "JobId", value = "`" .. jobId .. "`", inline = false },
                 { name = "Reason", value = jobId == currentJobId and "Current Job" or "Previously Failed", inline = false }
-            }, 0x95A5A6) 
+            }, 0x95A5A6)
         else
             sendWebhook("Attempting Teleport", {
                 { name = "Target JobId", value = "`" .. jobId .. "`", inline = false }
-            }, 0x00FFFF) 
+            }, 0x00FFFF)
 
             local success, err = pcall(function()
                 queue_on_teleport([[
                     repeat task.wait() until game:IsLoaded()
                     local sg = game:GetService("StarterGui")
                     local HttpService = game:GetService("HttpService")
-                    local webhook = "]] .. webhookUrl .. [["
+                    local webhook = _G.webhookUrl or ""
 
-                    if not _G.__JOIN_WEBHOOK_SENT then
+                    if webhook ~= "" and not _G.__JOIN_WEBHOOK_SENT then
                         _G.__JOIN_WEBHOOK_SENT = true
                         pcall(function()
                             local x = require(game:GetService("ReplicatedStorage").Data.EventShopData)
@@ -150,7 +149,7 @@ while task.wait(1.5) do
                 sendWebhook("Teleport Failed", {
                     { name = "JobId", value = "`" .. jobId .. "`", inline = false },
                     { name = "Reason", value = "`" .. reason .. "`", inline = false }
-                }, 0xE74C3C) 
+                }, 0xE74C3C)
 
                 if reason:lower():find("server is full") then
                     saveFailedJob(jobId)
