@@ -1,3 +1,5 @@
+if game.PlaceId ~= 126884695634066 then return end
+
 local rs, ps, hs = game:GetService("ReplicatedStorage"), game:GetService("Players"), game:GetService("HttpService")
 local plr, name = ps.LocalPlayer, ps.LocalPlayer.DisplayName
 local buyEv = rs:WaitForChild("GameEvents"):WaitForChild("BuyEventShopStock")
