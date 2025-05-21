@@ -130,15 +130,4 @@ wh("Script Started", {
 	{ name = "Session", value = _G._sessionID }
 }, 0xFFFFFF)
 
-game:BindToClose(function()
-	local summary = {}
-	for k, v in pairs(_G._totalBought) do
-		table.insert(summary, k .. ": " .. v)
-	end
-	if #summary > 0 then
-		wh("Session Ended", {
-			{ name = "Bought", value = table.concat(summary, "\n") },
-			{ name = "User", value = name }
-		}, 0xAAAAAA)
-	end
-end)
+print("Script loaded and active.")
