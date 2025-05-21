@@ -71,6 +71,32 @@ local function buyStocks()
     end
 end
 
+local maxBuys = 20
+local buyCount = 0
+local lastBloodMoonState = false
+
+workspace:GetAttributeChangedSignal("BloodMoonEvent"):Connect(function()
+    local state = workspace:GetAttribute("BloodMoonEvent")
+    print("[HOOK] BloodMoonEvent changed:", state)
+
+    if state then
+        if not lastBloodMoonState then
+            buyCount = 0
+        end
+
+        if buyCount < maxBuys then
+            buyStocks()
+            buyCount = buyCount + 1
+        else
+            print("Max buy limit reached for this BloodMoonEvent")
+        end
+    else
+        buyCount = 0
+    end
+
+    lastBloodMoonState = state
+end)
+
 if workspace:GetAttribute("NightEvent") ~= nil then
     workspace:GetAttributeChangedSignal("NightEvent"):Connect(function()
         local isNightEvent = workspace:GetAttribute("NightEvent")
@@ -86,22 +112,6 @@ if workspace:GetAttribute("NightEvent") ~= nil then
         end
     end)
 end
-
-workspace:GetAttributeChangedSignal("BloodMoonEvent"):Connect(function()
-    local state = workspace:GetAttribute("BloodMoonEvent")
-    print("[HOOK] BloodMoonEvent changed:", state)
-
-    if state then
-        sendWebhook(
-            "BloodMoon Event Started",
-            {
-                { name = "From:", value = displayName, inline = false }
-            },
-            0xFF0000
-        )
-        buyStocks()
-    end
-end)
 
 sendWebhook(
     "Script Started",
