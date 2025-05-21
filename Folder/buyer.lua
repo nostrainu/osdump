@@ -1,12 +1,12 @@
-if game.PlaceId ~= 126884695634066 then return end
-
 local rs, ps, hs = game:GetService("ReplicatedStorage"), game:GetService("Players"), game:GetService("HttpService")
 local plr, name = ps.LocalPlayer, ps.LocalPlayer.DisplayName
 local buyEv = rs:WaitForChild("GameEvents"):WaitForChild("BuyEventShopStock")
 local req = (syn and syn.request) or http_request or request
 
 local wU, uID = _G.webhookUrl or "", _G.userId or ""
-local bl = {}; for _, v in ipairs(_G.blacklist or {}) do bl[v] = true end
+local wlList = _G.whitelist or {}
+local wl = {}; for _, v in ipairs(wlList) do wl[v] = true end
+local uWL = next(wl) ~= nil
 
 if _G._connectionTable then
 	for _, c in pairs(_G._connectionTable) do pcall(function() c:Disconnect() end) end
@@ -89,7 +89,7 @@ local DataService = require(rs.Modules:WaitForChild("DataService"))
 local function buy()
 	local stocks = DataService:GetData().EventShopStock.Stocks
 	for name, _ in pairs(stocks) do
-		if not bl[name] then
+		if not uWL or wl[name] then
 			buyEv:FireServer(name)
 			_G._totalBought[name] = (_G._totalBought[name] or 0) + 1
 			uE()
