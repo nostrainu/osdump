@@ -1,11 +1,14 @@
+--// Short Aliases
 local rs, ps, hs = game:GetService("ReplicatedStorage"), game:GetService("Players"), game:GetService("HttpService")
 local plr, name = ps.LocalPlayer, ps.LocalPlayer.DisplayName
 local buyEv = rs:WaitForChild("GameEvents"):WaitForChild("BuyEventShopStock")
 local req = (syn and syn.request) or http_request or request
 
+--// Config
 local wU, uID = _G.webhookUrl or "", _G.userId or ""
 local bl = {}; for _, v in ipairs(_G.blacklist or {}) do bl[v] = true end
 
+--// Prevent Double Execution
 if _G._connectionTable then
 	for _, c in pairs(_G._connectionTable) do pcall(function() c:Disconnect() end) end
 end
@@ -14,6 +17,7 @@ _G._totalBought, _G._bloodTriggered, _G._nightTriggered = {}, false, false
 
 local messageId = nil
 
+--// Embed Builders
 local function createFields()
 	local itemNames, itemCounts = "", ""
 	for name, count in pairs(_G._totalBought) do
@@ -83,8 +87,31 @@ local function wh(title, fields, color)
 	end)
 end
 
+--// New slick embed for events
+local function whEvent(title, description, color)
+	if not req or wU == "" then return end
+	local body = {
+		embeds = {{
+			title = title,
+			description = description,
+			color = color or 0x00FF00,
+			timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+			footer = { text = name }
+		}}
+	}
+	pcall(function()
+		req({
+			Url = wU,
+			Method = "POST",
+			Headers = { ["Content-Type"] = "application/json" },
+			Body = hs:JSONEncode(body)
+		})
+	end)
+end
+
 local DataService = require(rs.Modules:WaitForChild("DataService"))
 
+--// Purchase Function
 local function buy()
 	local stocks = DataService:GetData().EventShopStock.Stocks
 	for name, _ in pairs(stocks) do
@@ -97,22 +124,32 @@ local function buy()
 	end
 end
 
+--// Event Hooks
 local function onNight()
 	if _G._nightTriggered then return end
 	_G._nightTriggered = true
-	wh("Night Event Started", {{ name = "From", value = name }}, 0x0000FF)
+	whEvent(
+		"🌙 Night Event Started",
+		"Triggered by: **" .. name .. "**",
+		0x0000FF
+	)
 end
 
 local function onBlood()
 	if _G._bloodTriggered then return end
 	_G._bloodTriggered = true
-	wh("BloodMoon Event Started", {{ name = "From", value = name }}, 0xFF0000)
+	whEvent(
+		"🩸 BloodMoon Event Started",
+		"Triggered by: **" .. name .. "**\n\nStarting purchases...",
+		0xFF0000
+	)
 
 	for i = 1, (_G.purchaseCount or 20) do
 		buy()
 	end
 end
 
+--// Connect to attribute changes
 table.insert(_G._connectionTable, workspace:GetAttributeChangedSignal("NightEvent"):Connect(function()
 	if workspace:GetAttribute("NightEvent") then onNight() end
 end))
@@ -121,13 +158,13 @@ table.insert(_G._connectionTable, workspace:GetAttributeChangedSignal("BloodMoon
 	if workspace:GetAttribute("BloodMoonEvent") then onBlood() end
 end))
 
+--// Initial checks
 if workspace:GetAttribute("NightEvent") then onNight() end
 if workspace:GetAttribute("BloodMoonEvent") then onBlood() end
 
+--// Initial webhook logs
 sendInitialEmbed()
 wh("Script Started", {
 	{ name = "User", value = name },
 	{ name = "Session", value = _G._sessionID }
 }, 0xFFFFFF)
-
-print("Script loaded and active.")
