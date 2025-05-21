@@ -1,3 +1,6 @@
+------------------------------
+-- Services & Variables
+------------------------------
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
@@ -9,9 +12,11 @@ local wU = _G.webhookUrl or ""
 local userId = _G.userId or ""
 
 local nightEvent = ReplicatedStorage:WaitForChild("NightEvent", 10)
-local bloodMoonEvent = ReplicatedStorage:FindFirstChild("BloodMoonEvent")
 local BuyEventShopStock = ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("BuyEventShopStock")
 
+------------------------------
+-- Webhook Sender
+------------------------------
 local function sendWebhook(title, fields, color)
     local req = (syn and syn.request) or http_request or request
     if not req or wU == "" then return end
@@ -42,6 +47,9 @@ local function sendWebhook(title, fields, color)
     end
 end
 
+------------------------------
+-- Buy Stock Logic
+------------------------------
 local function buyStocks()
     local data = require(ReplicatedStorage.Modules.DataService):GetData()
     local stocks = data.EventShopStock.Stocks
@@ -74,11 +82,14 @@ local function buyStocks()
     end
 end
 
+------------------------------
+-- NightEvent Trigger
+------------------------------
 if nightEvent then
     nightEvent.Event:Connect(function()
-        local isBloodMoonActive = bloodMoonEvent and bloodMoonEvent:FindFirstChild("Active") and bloodMoonEvent.Active.Value
+        local isBloodMoon = workspace:GetAttribute("BloodMoonEvent")
 
-        if isBloodMoonActive then
+        if isBloodMoon then
             sendWebhook(
                 "Night Event Started - BloodMoon Active",
                 {
@@ -102,21 +113,28 @@ else
     warn("NightEvent not found!")
 end
 
-if bloodMoonEvent and bloodMoonEvent:FindFirstChild("Active") then
-    bloodMoonEvent.Active.Changed:Connect(function(newVal)
-        if newVal == true then
-            sendWebhook(
-                "BloodMoon Event Activated",
-                {
-                    { name = "Run by", value = displayName, inline = false }
-                },
-                0xFF0000
-            )
-            buyStocks()
-        end
-    end)
-end
+------------------------------
+-- BloodMoonEvent Attribute Hook
+------------------------------
+workspace:GetAttributeChangedSignal("BloodMoonEvent"):Connect(function()
+    local state = workspace:GetAttribute("BloodMoonEvent")
+    print("[HOOK] BloodMoonEvent changed:", state)
 
+    if state then
+        sendWebhook(
+            "BloodMoon Event Activated",
+            {
+                { name = "Run by", value = displayName, inline = false }
+            },
+            0xFF0000
+        )
+        buyStocks()
+    end
+end)
+
+------------------------------
+-- Initial Startup Webhook
+------------------------------
 sendWebhook(
     "Script Started",
     {
