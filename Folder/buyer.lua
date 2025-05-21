@@ -64,7 +64,7 @@ local function buyStocks()
             {
                 { name = "Info", value = ping, inline = false },
                 { name = "Stocks", value = stockList, inline = false },
-                { name = "Run by", value = displayName, inline = false }
+                { name = "User:", value = displayName, inline = false }
             },
             0x00FF00
         )
@@ -77,9 +77,9 @@ if workspace:GetAttribute("NightEvent") ~= nil then
 
         if isNightEvent then
             sendWebhook(
-                "Night Event Started - BloodMoon Active",
+                "Night Event Started",
                 {
-                    { name = "Run by", value = displayName, inline = false }
+                    { name = "From:", value = displayName, inline = false }
                 },
                 0x0000FF
             )
@@ -95,7 +95,7 @@ workspace:GetAttributeChangedSignal("BloodMoonEvent"):Connect(function()
         sendWebhook(
             "BloodMoon Event Started",
             {
-                { name = "Run by", value = displayName, inline = false }
+                { name = "From:", value = displayName, inline = false }
             },
             0xFF0000
         )
@@ -106,7 +106,7 @@ end)
 sendWebhook(
     "Script Started",
     {
-        { name = "Run by", value = displayName, inline = false }
+        { name = "User:", value = displayName, inline = false }
     },
     0xFFFFFF
 )
