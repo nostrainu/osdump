@@ -1,124 +1,95 @@
-local HttpService = game:GetService("HttpService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
-local plr = Players.LocalPlayer
-local displayName = plr.DisplayName
-local wU = _G.webhookUrl or ""
-local userId = _G.userId or ""
-local BuyEventShopStock = ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("BuyEventShopStock")
+local hp = game:GetService("HttpService")
+local rs = game:GetService("ReplicatedStorage")
+local plrs = game:GetService("Players")
+local plr = plrs.LocalPlayer
+local name = plr.DisplayName
+local url = _G.webhookUrl or ""
+local uid = _G.userId or ""
+local bl = _G.blacklist or {}
+local evt = rs:WaitForChild("GameEvents"):WaitForChild("BuyEventShopStock")
 
-local function sendWebhook(title, fields, color)
-    local req = (syn and syn.request) or http_request or request
-    if not req or wU == "" then return end
+local req = syn and syn.request or http_request or request
 
+local function wh(t, f, c)
+    if not req or url == "" then return end
     local body = {
         embeds = {{
-            title = title,
-            color = color or 0x00FF00,
-            fields = fields,
+            title = t,
+            color = c or 0x00FF00,
+            fields = f,
             timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
         }}
     }
-
-    local success, err = pcall(function()
+    pcall(function()
         req({
-            Url = wU,
+            Url = url,
             Method = "POST",
             Headers = {
                 ["Content-Type"] = "application/json",
                 ["User-Agent"] = "Roblox-Script"
             },
-            Body = HttpService:JSONEncode(body),
+            Body = hp:JSONEncode(body),
         })
     end)
+end
 
-    if not success then
-        warn("Webhook error:", err)
+local function buy()
+    print("buy")
+    local d = require(rs.Modules.DataService):GetData()
+    local s = d.EventShopStock.Stocks
+    local got = {}
+
+    for i, _ in pairs(s) do
+        if bl[i] then continue end
+        evt:FireServer(i)
+        print("Purchased:", i)
+        table.insert(got, i)
+    end
+
+    if #got > 0 then
+        local list = "• " .. table.concat(got, "\n• ")
+        local ping = (table.find(got, "Candy Blossom") and uid ~= "") and "<@" .. uid .. ">" or "No ping"
+
+        wh("Stock Purchased", {
+            { name = "Info", value = ping },
+            { name = "Stocks", value = list },
+            { name = "User:", value = name }
+        }, 0x00FF00)
     end
 end
 
-local function buyStocks()
-    print("buy") 
-
-    local data = require(ReplicatedStorage.Modules.DataService):GetData()
-    local stocks = data.EventShopStock.Stocks
-
-    local purchased = {}
-
-    for stockName, _ in pairs(stocks) do
-        if _G.blacklist and _G.blacklist[stockName] then
-            continue
-        end
-
-        BuyEventShopStock:FireServer(stockName)
-        print("Purchased stock:", stockName)
-        table.insert(purchased, stockName)
+workspace:GetAttributeChangedSignal("NightEvent"):Connect(function()
+    if workspace:GetAttribute("NightEvent") then
+        wh("Night Event Started", {
+            { name = "From:", value = name }
+        }, 0x0000FF)
     end
-
-    if #purchased > 0 then
-        local stockList = "• " .. table.concat(purchased, "\n• ")
-        local ping = (table.find(purchased, "Candy Blossom") and userId ~= "") and ("<@" .. userId .. ">") or "No ping"
-
-        sendWebhook(
-            "Stock Purchased",
-            {
-                { name = "Info", value = ping, inline = false },
-                { name = "Stocks", value = stockList, inline = false },
-                { name = "User:", value = displayName, inline = false }
-            },
-            0x00FF00
-        )
-    end
-end
-
-local maxBuys = 20
-local buyCount = 0
-local lastBloodMoonState = false
-
-workspace:GetAttributeChangedSignal("BloodMoonEvent"):Connect(function()
-    local state = workspace:GetAttribute("BloodMoonEvent")
-    print("[HOOK] BloodMoonEvent changed:", state)
-
-    if state then
-        if not lastBloodMoonState then
-            buyCount = 0
-        end
-
-        if buyCount < maxBuys then
-            buyStocks()
-            buyCount = buyCount + 1
-        else
-            print("Max buy limit reached for this BloodMoonEvent")
-        end
-    else
-        buyCount = 0
-    end
-
-    lastBloodMoonState = state
 end)
 
-if workspace:GetAttribute("NightEvent") ~= nil then
-    workspace:GetAttributeChangedSignal("NightEvent"):Connect(function()
-        local isNightEvent = workspace:GetAttribute("NightEvent")
-
-        if isNightEvent then
-            sendWebhook(
-                "Night Event Started",
-                {
-                    { name = "From:", value = displayName, inline = false }
-                },
-                0x0000FF
-            )
-        end
-    end)
+if workspace:GetAttribute("NightEvent") then
+    wh("Night Event Started", {
+        { name = "From:", value = name }
+    }, 0x0000FF)
 end
 
-sendWebhook(
-    "Script Started",
-    {
-        { name = "User:", value = displayName, inline = false }
-    },
-    0xFFFFFF
-)
+workspace:GetAttributeChangedSignal("BloodMoonEvent"):Connect(function()
+    if workspace:GetAttribute("BloodMoonEvent") then
+        wh("BloodMoon Event Started", {
+            { name = "From:", value = name }
+        }, 0xFF0000)
+        buy()
+    end
+end)
 
-print("Script loaded. Waiting for NightEvent and BloodMoonEvent...")
+if workspace:GetAttribute("BloodMoonEvent") then
+    wh("BloodMoon Event Started", {
+        { name = "From:", value = name }
+    }, 0xFF0000)
+    buy()
+end
+
+wh("Script Started", {
+    { name = "User:", value = name }
+}, 0xFFFFFF)
+
+print("Loaded. Waiting for NightEvent / BloodMoonEvent...")
