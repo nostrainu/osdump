@@ -11,7 +11,7 @@ local ntf = function(t, m)
     end)
 end
 
-local vers = { [1223] = true, [1224] = true, [1231] = true }
+local vers = { [1223] = true, [1224] = true, [1226] = true, [1231] = true }
 local req = http_request or request or (syn and syn.request) or (fluxus and fluxus.request)
 if not req then ntf("server hop", "no http request") return end
 
