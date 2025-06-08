@@ -17,7 +17,7 @@ local petImages = {
     ["Raccoon"] = "https://static.wikia.nocookie.net/growagarden/images/5/54/Raccon_Better_Quality.png"
 }
 
-ffunction send_webhook(url, petName, weight, chance)
+function send_webhook(url, petName, weight, chance)
     local imageUrl = petImages[petName]
     local playerName = game:GetService("Players").LocalPlayer.DisplayName
     local description = string.format("**Weight:** %s", tostring(weight or "Unknown"))
