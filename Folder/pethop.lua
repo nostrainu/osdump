@@ -12,7 +12,7 @@ local petImages = {
     ["Queen Bee"] = "https://static.wikia.nocookie.net/growagarden/images/7/7a/Queen_bee.png",
     ["Dragonfly"] = "https://static.wikia.nocookie.net/growagarden/images/c/c9/DragonflyIcon.png",
     ["Disco Bee"] = "https://static.wikia.nocookie.net/growagarden/images/5/56/Bee.png",
-    ["Racoon"] = "https://static.wikia.nocookie.net/growagarden/images/5/54/Raccon_Better_Quality.png"
+    ["Raccoon"] = "https://static.wikia.nocookie.net/growagarden/images/5/54/Raccon_Better_Quality.png"
 }
 
 function send_webhook(url, petName, weight)
@@ -55,6 +55,19 @@ function get_egg(uid)
     return nil
 end
 
+local function trim(s)
+    return s:match("^%s*(.-)%s*$")
+end
+
+local function normalizeName(s)
+    return trim(tostring(s)):lower()
+end
+
+local normalizedTargets = {}
+for _, name in ipairs(getgenv().target_pets or {}) do
+    normalizedTargets[normalizeName(name)] = true
+end
+
 local foundTargetPet = false
 
 for i, v in data_service:GetData().SavedObjects do
@@ -65,22 +78,25 @@ for i, v in data_service:GetData().SavedObjects do
     if not data.RandomPetData then continue end
 
     local petName = data.Type
+    local normalizedPetName = normalizeName(petName)
 
-    if not (getgenv().target_pets and table.find(getgenv().target_pets, petName)) then
+    if not normalizedTargets[normalizedPetName] then
         continue
     end
 
     foundTargetPet = true
 
     if getgenv().webhook_url then
-        local pingUser = getgenv().pingUser or ""
         send_webhook(getgenv().webhook_url, petName, data.RandomPetData.Weight)
     end
 
-    replicated_storage.GameEvents.PetEggService:FireServer("HatchPet", get_egg(i))
-    task.wait(10)
-    game:GetService("TeleportService"):Teleport(game.PlaceId)
-    break
+    local eggToHatch = get_egg(i)
+    if eggToHatch then
+        replicated_storage.GameEvents.PetEggService:FireServer("HatchPet", eggToHatch)
+        task.wait(10)
+        game:GetService("TeleportService"):Teleport(game.PlaceId)
+        break
+    end
 end
 
 if not foundTargetPet then
