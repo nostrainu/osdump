@@ -1,122 +1,83 @@
 if not game:IsLoaded() then game.Loaded:Wait() end
 loadstring(game:HttpGet("https://raw.githubusercontent.com/uzu01/arise/refs/heads/main/global.lua"))()
-
 _G.JxereasExistingHooks = { GuiDetectionBypass = true }
 
-local replicated_storage = game:GetService("ReplicatedStorage")
-local data_service = require(replicated_storage.Modules.DataService)
-local http_service = game:GetService("HttpService")
-local teleport_service = game:GetService("TeleportService")
-local player = game.Players.LocalPlayer
-local garden
+local rs = game:GetService("ReplicatedStorage")
+local ds = require(rs.Modules.DataService)
+local http = game:GetService("HttpService")
+local tp = game:GetService("TeleportService")
+local plr = game.Players.LocalPlayer
+local gd
 
-local petImages = {
+local imgs = {
     ["Queen Bee"] = "https://static.wikia.nocookie.net/growagarden/images/7/7a/Queen_bee.png",
     ["Dragonfly"] = "https://static.wikia.nocookie.net/growagarden/images/c/c9/DragonflyIcon.png",
     ["Disco Bee"] = "https://static.wikia.nocookie.net/growagarden/images/5/56/Bee.png",
     ["Raccoon"] = "https://static.wikia.nocookie.net/growagarden/images/5/54/Raccon_Better_Quality.png"
 }
 
-function send_webhook(url, petName, weight, chance)
-    local imageUrl = petImages[petName]
-    local playerName = player.DisplayName
-
-    local description = ""
-
-    if weight and type(weight) == "number" then
-        description = description .. string.format("**Weight:** %.2f kg", weight)
-    else
-        description = description .. "**Weight:** Unknown"
-    end
-
-    if chance and type(chance) == "number" then
-        description = description .. string.format("\n**Chance:** %.2f%%", chance)
-    else
-        description = description .. "\n**Chance:** Unknown"
-    end
-
-    local embed = {
-        title = petName,
-        color = 0xffc800,
-        description = description,
-        thumbnail = {
-            url = imageUrl or "https://cdn-icons-png.flaticon.com/512/616/616408.png"
+local function wh(url, name, w, c, ping)
+    local eb = {
+        title = name,
+        color = imgs[name] and 0xff8800 or 0x00ffcc,
+        thumbnail = { url = imgs[name] or "https://media.tenor.com/VLnaNrQmjMoAAAAi/transparent-anime.gif" },
+        fields = {
+            { name = "Weight", value = w and ("%.2f kg"):format(w) or "Unknown", inline = true },
+            { name = "Chance", value = c and ("%.2f%%"):format(c) or "Unknown", inline = true }
         },
-        footer = {
-            text = "User: " .. playerName
-        }
+        footer = { text = "User: " .. plr.DisplayName }
     }
 
-    local payload = {
-        content = "",
-        embeds = { embed }
-    }
-
-    request({
-        Url = url,
-        Method = "POST",
-        Headers = { ["Content-Type"] = "application/json" },
-        Body = http_service:JSONEncode(payload)
-    })
+    pcall(function()
+        request({
+            Url = url,
+            Method = "POST",
+            Headers = { ["Content-Type"] = "application/json" },
+            Body = http:JSONEncode({ content = ping or "", embeds = { eb } })
+        })
+    end)
 end
 
 task.wait(3)
-
 for _, v in workspace.Farm:GetChildren() do
     if v:FindFirstChild("Important") and v.Important:FindFirstChild("Data") and v.Important.Data:FindFirstChild("Owner") then
-        if v.Important.Data.Owner.Value == player.Name then
-            garden = v
-            break
-        end
+        if v.Important.Data.Owner.Value == plr.Name then gd = v break end
     end
 end
 
-function get_egg(uid)
-    for _, v in garden.Important.Objects_Physical:GetChildren() do
-        if v.Name:match("PetEgg") and v:GetAttribute("OBJECT_UUID") == uid then
-            return v
-        end
+local function egg(uid)
+    for _, v in gd.Important.Objects_Physical:GetChildren() do
+        if v.Name:match("PetEgg") and v:GetAttribute("OBJECT_UUID") == uid then return v end
     end
-    return nil
 end
 
-local function normalize(s)
-    return (tostring(s):lower():gsub("^%s*(.-)%s*$", "%1"))
+local function n(s)
+    return tostring(s):lower():gsub("^%s*(.-)%s*$", "%1")
 end
 
-local normalizedTargets = {}
-for _, name in ipairs(getgenv().target_pets or {}) do
-    normalizedTargets[normalize(name)] = true
-end
+local tgt = {}
+for _, v in ipairs(getgenv().target_pets or {}) do tgt[n(v)] = true end
 
-local foundTargetPet = false
+local fTpet = false
 
-for uid, v in data_service:GetData().SavedObjects do
-    local data = v.Data
-    if not data or not data.EggName or not data.RandomPetData then continue end
-
-    local realPetName = data.RandomPetData.Name
-    if not realPetName or not normalizedTargets[normalize(realPetName)] then
-        continue
-    end
-
-    foundTargetPet = true
-
+for uid, v in ds:GetData().SavedObjects do
+    local d = v.Data
+    if not d or not d.EggName or not d.RandomPetData then continue end
+    local pn = d.RandomPetData.Name
+    if not pn or not tgt[n(pn)] then continue end
+    fTpet = true
     if getgenv().webhook_url then
-        send_webhook(getgenv().webhook_url, realPetName, data.RandomPetData.Weight, getgenv().pingUser)
+        wh(getgenv().webhook_url, pn, d.RandomPetData.Weight, d.RandomPetData.Chance, getgenv().pingUser)
     end
-
-    local egg = get_egg(uid)
-    if egg then
-        replicated_storage.GameEvents.PetEggService:FireServer("HatchPet", egg)
+    local e = egg(uid)
+    if e then
+        rs.GameEvents.PetEggService:FireServer("HatchPet", e)
         task.wait(10)
-        teleport_service:Teleport(game.PlaceId)
+        tp:Teleport(game.PlaceId)
         break
     end
 end
 
-if not foundTargetPet then
-    teleport_service:Teleport(game.PlaceId)
-end
+if not fTpet then tp:Teleport(game.PlaceId) end
 
 queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/pethop.lua"))()')
