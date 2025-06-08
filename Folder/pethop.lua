@@ -59,9 +59,8 @@ local function egg(uid)
     end
 end
 
--- Helper function to check if pet is in target list
 local function isTargetPet(name)
-    if not getgenv().target_pets then return true end -- no filter, allow all
+    if not getgenv().target_pets then return true end 
     for _, targetName in ipairs(getgenv().target_pets) do
         if targetName == name then
             return true
