@@ -15,7 +15,7 @@ local petImages = {
     ["Raccoon"] = "https://static.wikia.nocookie.net/growagarden/images/5/54/Raccon_Better_Quality.png"
 }
 
-function send_webhook(url, petName, weight)
+function send_webhook(url, petName, weight, pingUser)
     local imageUrl = petImages[petName]
     local embed = {
         title = petName,
@@ -27,7 +27,7 @@ function send_webhook(url, petName, weight)
     }
 
     local payload = {
-        content = "",
+        content = pingUser or "",
         embeds = { embed }
     }
 
@@ -87,7 +87,8 @@ for i, v in data_service:GetData().SavedObjects do
     foundTargetPet = true
 
     if getgenv().webhook_url then
-        send_webhook(getgenv().webhook_url, petName, data.RandomPetData.Weight)
+        local pingUser = getgenv().pingUser or ""
+        send_webhook(getgenv().webhook_url, petName, data.RandomPetData.Weight, pingUser)
     end
 
     local eggToHatch = get_egg(i)
