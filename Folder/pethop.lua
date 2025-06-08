@@ -119,4 +119,4 @@ if not foundTargetPet then
     teleport_service:Teleport(game.PlaceId)
 end
 
-queue_on_teleport('loadstring(game:HttpGet("https://pastebin.com/raw/BE36f3z8"))()')
+queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/pethop.lua"))()')
