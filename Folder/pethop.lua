@@ -30,7 +30,7 @@ local function wh(url, name, w, c, ping)
 
     local req = request or (syn and syn.request) or http_request
     if req then
-        pcall(function()
+        local success, err = pcall(function()
             req({
                 Url = url,
                 Method = "POST",
@@ -38,6 +38,11 @@ local function wh(url, name, w, c, ping)
                 Body = http:JSONEncode({ content = ping or "", embeds = { eb } })
             })
         end)
+        if not success then
+            warn("Webhook send failed:", err)
+        end
+    else
+        warn("No request function available for webhook")
     end
 end
 
@@ -58,20 +63,21 @@ local function n(s)
     return tostring(s):lower():gsub("^%s*(.-)%s*$", "%1")
 end
 
-local tgt = {}
-for _, v in ipairs(getgenv().target_pets or {}) do tgt[n(v)] = true end
-
 local fTpet = false
 
 for uid, v in ds:GetData().SavedObjects do
     local d = v.Data
     if not d or not d.EggName or not d.RandomPetData then continue end
     local pn = d.RandomPetData.Name
-    if not pn or not tgt[n(pn)] then continue end
+    if not pn then continue end
+
     fTpet = true
+    print("[DEBUG] Pet found, sending webhook:", pn)
+
     if getgenv().webhook_url then
         wh(getgenv().webhook_url, pn, d.RandomPetData.Weight, d.RandomPetData.Chance, getgenv().pingUser)
     end
+
     local e = egg(uid)
     if e then
         rs.GameEvents.PetEggService:FireServer("HatchPet", e)
