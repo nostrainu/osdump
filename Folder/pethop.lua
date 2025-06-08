@@ -1,7 +1,7 @@
 if not game:IsLoaded() then game.Loaded:Wait() end
 loadstring(game:HttpGet("https://raw.githubusercontent.com/uzu01/arise/refs/heads/main/global.lua"))()
 
-_G.JxereasExistingHooks  = {GuiDetectionBypass  = true}
+_G.JxereasExistingHooks = { GuiDetectionBypass = true }
 
 local replicated_storage = game:GetService("ReplicatedStorage")
 local data_service = require(replicated_storage.Modules.DataService)
@@ -19,7 +19,7 @@ local petImages = {
 
 function send_webhook(url, petName, weight, chance)
     local imageUrl = petImages[petName]
-    local playerName = game:GetService("Players").LocalPlayer.DisplayName
+    local playerName = player.DisplayName
 
     local description = ""
 
@@ -56,7 +56,7 @@ function send_webhook(url, petName, weight, chance)
         Url = url,
         Method = "POST",
         Headers = { ["Content-Type"] = "application/json" },
-        Body = game:GetService("HttpService"):JSONEncode(payload)
+        Body = http_service:JSONEncode(payload)
     })
 end
 
@@ -95,13 +95,15 @@ for uid, v in data_service:GetData().SavedObjects do
     local data = v.Data
     if not data or not data.EggName or not data.RandomPetData then continue end
 
-    local petName = data.Type
-    if not petName or not normalizedTargets[normalize(petName)] then continue end
+    local realPetName = data.RandomPetData.Name
+    if not realPetName or not normalizedTargets[normalize(realPetName)] then
+        continue
+    end
 
     foundTargetPet = true
 
     if getgenv().webhook_url then
-        send_webhook(getgenv().webhook_url, petName, data.RandomPetData.Weight, getgenv().pingUser)
+        send_webhook(getgenv().webhook_url, realPetName, data.RandomPetData.Weight, getgenv().pingUser)
     end
 
     local egg = get_egg(uid)
