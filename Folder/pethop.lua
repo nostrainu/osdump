@@ -59,8 +59,15 @@ local function egg(uid)
     end
 end
 
-local function n(s)
-    return tostring(s):lower():gsub("^%s*(.-)%s*$", "%1")
+-- Helper function to check if pet is in target list
+local function isTargetPet(name)
+    if not getgenv().target_pets then return true end -- no filter, allow all
+    for _, targetName in ipairs(getgenv().target_pets) do
+        if targetName == name then
+            return true
+        end
+    end
+    return false
 end
 
 local fTpet = false
@@ -70,6 +77,11 @@ for uid, v in ds:GetData().SavedObjects do
     if not d or not d.EggName or not d.RandomPetData then continue end
     local pn = d.RandomPetData.Name
     if not pn then continue end
+
+    if not isTargetPet(pn) then
+        print("[DEBUG] Pet skipped (not in target list):", pn)
+        continue
+    end
 
     fTpet = true
     print("[DEBUG] Pet found, sending webhook:", pn)
