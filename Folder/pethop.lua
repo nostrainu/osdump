@@ -20,7 +20,7 @@ function send_webhook(url, petName, weight, pingUser)
     local embed = {
         title = petName,
         color = 0xffc800,
-        description = "**Weight:** " .. tostring(weight or "Unknown"),
+        description = "**Weight:** " .. (weight and string.format("%.2f", weight) or "Unknown"),
         thumbnail = {
             url = imageUrl or "https://cdn-icons-png.flaticon.com/512/616/616408.png"
         }
