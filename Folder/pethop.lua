@@ -1,13 +1,13 @@
 if not game:IsLoaded() then game.Loaded:Wait() end
 loadstring(game:HttpGet("https://raw.githubusercontent.com/uzu01/arise/refs/heads/main/global.lua"))()
-_G.JxereasExistingHooks = { GuiDetectionBypass = true }
 
-local rs = game:GetService("ReplicatedStorage")
-local ds = require(rs.Modules.DataService)
-local http = game:GetService("HttpService")
-local tp = game:GetService("TeleportService")
-local plr = game.Players.LocalPlayer
-local gd
+_G.JxereasExistingHooks  = {GuiDetectionBypass  = true}
+
+local notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/Jxereas/UI-Libraries/main/notification_gui_library.lua", true))()
+local replicated_storage = game:GetService("ReplicatedStorage")
+local data_service = require(replicated_storage.Modules.DataService)
+local garden
+local http_service = game:GetService("HttpService")
 
 local imgs = {
     ["Queen Bee"] = "https://static.wikia.nocookie.net/growagarden/images/7/7a/Queen_bee.png",
@@ -16,26 +16,27 @@ local imgs = {
     ["Raccoon"] = "https://static.wikia.nocookie.net/growagarden/images/5/54/Raccon_Better_Quality.png"
 }
 
-local function wh(url, name, w, c, ping)
-    local eb = {
-        title = name,
+function send_webhook(url, petName, pingUser)
+    local embed = {
+        title = "Found pet: **" .. petName .. "** (Hatching now!)",
         color = 0xff8800,
-        thumbnail = { url = imgs[name] or "https://media.tenor.com/VLnaNrQmjMoAAAAi/transparent-anime.gif" },
-        fields = {
-            { name = "Weight", value = w and ("%.2f kg"):format(w) or "Unknown", inline = true },
-            { name = "Chance", value = c and ("%.2f%%"):format(c) or "Unknown", inline = true }
-        },
-        footer = { text = "User: " .. plr.DisplayName }
+        thumbnail = { url = imgs[petName] or "https://media.tenor.com/VLnaNrQmjMoAAAAi/transparent-anime.gif" },
+        footer = { text = "User: " .. game.Players.LocalPlayer.DisplayName }
+    }
+
+    local body = {
+        content = pingUser or "",
+        embeds = { embed }
     }
 
     local req = request or (syn and syn.request) or http_request
     if req then
         local success, err = pcall(function()
             req({
-                Url = url,
+                Url = url .. "?wait=true",
                 Method = "POST",
                 Headers = { ["Content-Type"] = "application/json" },
-                Body = http:JSONEncode({ content = ping or "", embeds = { eb } })
+                Body = http_service:JSONEncode(body)
             })
         end)
         if not success then
@@ -47,57 +48,54 @@ local function wh(url, name, w, c, ping)
 end
 
 task.wait(3)
-for _, v in workspace.Farm:GetChildren() do
-    if v:FindFirstChild("Important") and v.Important:FindFirstChild("Data") and v.Important.Data:FindFirstChild("Owner") then
-        if v.Important.Data.Owner.Value == plr.Name then gd = v break end
-    end
-end
 
-local function egg(uid)
-    for _, v in gd.Important.Objects_Physical:GetChildren() do
-        if v.Name:match("PetEgg") and v:GetAttribute("OBJECT_UUID") == uid then return v end
-    end
-end
+local player = game.Players.LocalPlayer
 
-local function isTargetPet(name)
-    if not getgenv().target_pets then return true end 
-    for _, targetName in ipairs(getgenv().target_pets) do
-        if targetName == name then
-            return true
-        end
-    end
-    return false
-end
-
-local fTpet = false
-
-for uid, v in ds:GetData().SavedObjects do
-    local d = v.Data
-    if not d or not d.EggName or not d.RandomPetData then continue end
-    local pn = d.RandomPetData.Name
-    if not pn then continue end
-
-    if not isTargetPet(pn) then
-        print("[DEBUG] Pet skipped (not in target list):", pn)
-        continue
-    end
-
-    fTpet = true
-    print("[DEBUG] Pet found, sending webhook:", pn)
-
-    if getgenv().webhook_url then
-        wh(getgenv().webhook_url, pn, d.RandomPetData.Weight, d.RandomPetData.Chance, getgenv().pingUser)
-    end
-
-    local e = egg(uid)
-    if e then
-        rs.GameEvents.PetEggService:FireServer("HatchPet", e)
-        task.wait(10)
-        tp:Teleport(game.PlaceId)
+for i, v in workspace.Farm:GetChildren() do
+    if v.Important.Data.Owner.Value == player.Name then
+        garden = v
         break
     end
 end
 
-if not fTpet then tp:Teleport(game.PlaceId) end
+function get_egg(uid)
+    for i, v in garden.Important.Objects_Physical:GetChildren() do
+        if v.Name:match("PetEgg") and v:GetAttribute("OBJECT_UUID") == uid then
+            return v
+        end
+    end
+    return nil
+end
 
-queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/pethop.lua"))()')
+local foundTargetPet = false
+
+for i, v in data_service:GetData().SavedObjects do
+    local data = v.Data
+    local egg = data and data.EggName
+
+    if not egg then continue end
+    if not data.RandomPetData then continue end
+
+    local petName = data.Type
+
+    if not (getgenv().target_pets and table.find(getgenv().target_pets, petName)) then
+        continue
+    end
+
+    foundTargetPet = true
+
+    if getgenv().webhook_url then
+        send_webhook(getgenv().webhook_url, petName, getgenv().pingUser)
+    end
+
+    replicated_storage.GameEvents.PetEggService:FireServer("HatchPet", get_egg(i))
+    task.wait(10)
+    game:GetService("TeleportService"):Teleport(game.PlaceId)
+    break
+end
+
+if not foundTargetPet then
+    game:GetService("TeleportService"):Teleport(game.PlaceId)
+end
+
+queue_on_teleport('loadstring(game:HttpGet("https://pastebin.com/raw/JBSyuV4f"))()')
