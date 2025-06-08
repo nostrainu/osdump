@@ -20,10 +20,19 @@ local petImages = {
 function send_webhook(url, petName, weight, chance)
     local imageUrl = petImages[petName]
     local playerName = game:GetService("Players").LocalPlayer.DisplayName
-    local description = string.format("**Weight:** %s", tostring(weight or "Unknown"))
 
-    if chance then
-        description = description .. string.format("\n**Chance:** %.2f%%", tonumber(chance) or 0)
+    local description = ""
+
+    if weight and type(weight) == "number" then
+        description = description .. string.format("**Weight:** %.2f kg", weight)
+    else
+        description = description .. "**Weight:** Unknown"
+    end
+
+    if chance and type(chance) == "number" then
+        description = description .. string.format("\n**Chance:** %.2f%%", chance)
+    else
+        description = description .. "\n**Chance:** Unknown"
     end
 
     local embed = {
