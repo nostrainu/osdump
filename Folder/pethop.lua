@@ -17,22 +17,29 @@ local petImages = {
     ["Raccoon"] = "https://static.wikia.nocookie.net/growagarden/images/5/54/Raccon_Better_Quality.png"
 }
 
-function send_webhook(url, petName, weight, pingUser)
+ffunction send_webhook(url, petName, weight, chance)
     local imageUrl = petImages[petName]
+    local playerName = game:GetService("Players").LocalPlayer.DisplayName
+    local description = string.format("**Weight:** %s", tostring(weight or "Unknown"))
+
+    if chance then
+        description = description .. string.format("\n**Chance:** %.2f%%", tonumber(chance) or 0)
+    end
+
     local embed = {
         title = petName,
         color = 0xffc800,
-        description = "**Weight:** " .. (weight and string.format("%.2f", weight) or "Unknown"),
+        description = description,
         thumbnail = {
             url = imageUrl or "https://cdn-icons-png.flaticon.com/512/616/616408.png"
         },
         footer = {
-            text = "User: " .. player.DisplayName
+            text = "User: " .. playerName
         }
     }
 
     local payload = {
-        content = pingUser or "",
+        content = "",
         embeds = { embed }
     }
 
@@ -40,7 +47,7 @@ function send_webhook(url, petName, weight, pingUser)
         Url = url,
         Method = "POST",
         Headers = { ["Content-Type"] = "application/json" },
-        Body = http_service:JSONEncode(payload)
+        Body = game:GetService("HttpService"):JSONEncode(payload)
     })
 end
 
