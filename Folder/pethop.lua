@@ -19,7 +19,7 @@ local imgs = {
 local function wh(url, name, w, c, ping)
     local eb = {
         title = name,
-        color = imgs[name] and 0xff8800 or 0x00ffcc,
+        color = 0xff8800,
         thumbnail = { url = imgs[name] or "https://media.tenor.com/VLnaNrQmjMoAAAAi/transparent-anime.gif" },
         fields = {
             { name = "Weight", value = w and ("%.2f kg"):format(w) or "Unknown", inline = true },
@@ -28,14 +28,17 @@ local function wh(url, name, w, c, ping)
         footer = { text = "User: " .. plr.DisplayName }
     }
 
-    pcall(function()
-        request({
-            Url = url,
-            Method = "POST",
-            Headers = { ["Content-Type"] = "application/json" },
-            Body = http:JSONEncode({ content = ping or "", embeds = { eb } })
-        })
-    end)
+    local req = request or (syn and syn.request) or http_request
+    if req then
+        pcall(function()
+            req({
+                Url = url,
+                Method = "POST",
+                Headers = { ["Content-Type"] = "application/json" },
+                Body = http:JSONEncode({ content = ping or "", embeds = { eb } })
+            })
+        end)
+    end
 end
 
 task.wait(3)
