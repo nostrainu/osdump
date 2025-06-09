@@ -113,8 +113,7 @@ if isTargetPet(petName) then
     end
 end
 
-if foundTargetPet then
-    queue_on_teleport('loadstring(game:HttpGet("https://pastebin.com/phMPqnsw"))()')
+if foundTargetPet then queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/pethop.lua"))()')
     task.wait(3)
     teleport_service:Teleport(game.PlaceId)
 else
@@ -122,12 +121,9 @@ else
         getgenv().webhook_url = %q
         getgenv().target_pets = %s
         getgenv().pingUser = %q
-        loadstring(game:HttpGet("https://pastebin.com/raw/G7z8Lb1w"))()
+        loadstring(game:HttpGet("hhttps://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/pethop.lua"))()
     ]], getgenv().webhook_url or "", http_service:JSONEncode(getgenv().target_pets or {}), getgenv().pingUser or "")
 
     queue_on_teleport(tpCD)
     teleport_service:Teleport(game.PlaceId)
 end
-
---grant
---source: uzu
