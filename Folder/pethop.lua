@@ -15,7 +15,7 @@ local imgs = {
     ["Raccoon"] = "https://static.wikia.nocookie.net/growagarden/images/5/54/Raccon_Better_Quality.png"
 }
  
-local default_thumbnail = "https://media.tenor.com/VLnaNrQmjMoAAAAi/transparent-anime.gif"
+local default_thumbnail = getgenv().default_thumbnail or "https://media.tenor.com/VLnaNrQmjMoAAAAi/transparent-anime.gif"
  
 function send_webhook(url, petName, weight, chance, pingUser)
     local embed = {
