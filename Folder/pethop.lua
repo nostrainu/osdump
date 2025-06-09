@@ -164,7 +164,7 @@ if #eggsToHatch > 0 then
         getgenv().webhook_url = %q
         getgenv().target_pets = %s
         getgenv().pingUser = %q
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/debug.lua"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/pethop.lua"))()
     ]], getgenv().webhook_url or "", http_service:JSONEncode(getgenv().target_pets or {}), getgenv().pingUser or "")
 
     queue_on_teleport(function()
