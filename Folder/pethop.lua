@@ -18,6 +18,7 @@ local imgs = {
 }
 
 local default_thumbnail = getgenv().default_thumbnail or "https://media.tenor.com/VLnaNrQmjMoAAAAi/transparent-anime.gif"
+local noEggsThumbnail = "https://i.redd.it/1c331cu6ypj71.gif"
 
 function send_webhook(url, petName, weight, chance, pingUser)
     local embed = {
@@ -39,6 +40,36 @@ function send_webhook(url, petName, weight, chance, pingUser)
         pcall(function()
             req({
                 Url = url .. "?wait=true",
+                Method = "POST",
+                Headers = { ["Content-Type"] = "application/json" },
+                Body = http_service:JSONEncode(body)
+            })
+        end)
+    end
+end
+
+local function sendNoEggsWebhook()
+    if not getgenv().webhook_url then return end
+
+    local embed = {
+        title = "No Eggs to Hatch",
+        description = "There are currently no eggs available to hatch.",
+        color = 0xff0000,
+        thumbnail = { url = noEggsThumbnail },
+        footer = { text = "User: " .. player.DisplayName },
+        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ", os.time())
+    }
+
+    local body = {
+        content = "",
+        embeds = { embed }
+    }
+
+    local req = request or (syn and syn.request) or http_request
+    if req then
+        pcall(function()
+            req({
+                Url = getgenv().webhook_url .. "?wait=true",
                 Method = "POST",
                 Headers = { ["Content-Type"] = "application/json" },
                 Body = http_service:JSONEncode(body)
@@ -129,23 +160,20 @@ if #eggsToHatch > 0 then
         task.wait(0.5)
     end
 
-    queue_on_teleport(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/pethop.lua"))()
-    end)
-
-    task.wait(3)
-    teleport_service:Teleport(game.PlaceId)
-else
     local tpCD = string.format([[
         getgenv().webhook_url = %q
         getgenv().target_pets = %s
         getgenv().pingUser = %q
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/pethop.lua"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/debug.lua"))()
     ]], getgenv().webhook_url or "", http_service:JSONEncode(getgenv().target_pets or {}), getgenv().pingUser or "")
 
     queue_on_teleport(function()
         loadstring(tpCD)()
     end)
 
+    task.wait(3)
     teleport_service:Teleport(game.PlaceId)
+else
+    sendNoEggsWebhook() 
+    return
 end
