@@ -113,7 +113,7 @@ if isTargetPet(petName) then
     end
 end
 
-if foundTargetPet then queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/pethop.lua"))()')
+if foundTargetPet then queue_on_teleport('loadstring(game:HttpGet("https://pastebin.com/raw/JBSyuV4f"))()')
     task.wait(3)
     teleport_service:Teleport(game.PlaceId)
 else
