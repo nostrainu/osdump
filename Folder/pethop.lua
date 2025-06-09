@@ -102,18 +102,31 @@ for uid, v in pairs(savedData.SavedObjects) do
         send_webhook(getgenv().webhook_url, petName, weight, chancePercent, pingUser)
     end
  
-if isTargetPet(petName) then
-    local eggInstance = get_egg(uid)
-    if eggInstance then
-        pcall(function()
-            replicated_storage.GameEvents.PetEggService:FireServer("HatchPet", eggInstance)
-        end)
-        foundTargetPet = true
-        task.wait(0.5)
+local eggsToHatch = {}
+
+for uid, v in pairs(savedData.SavedObjects) do
+    local data = v.Data
+    local egg = data and data.EggName
+    if not egg or not data.RandomPetData then continue end
+
+    local petName = data.Type
+    if isTargetPet(petName) then
+        local eggInstance = get_egg(uid)
+        if eggInstance then
+            table.insert(eggsToHatch, eggInstance)
+        end
     end
 end
 
-if foundTargetPet then queue_on_teleport('loadstring(game:HttpGet("https://pastebin.com/raw/JBSyuV4f"))()')
+if #eggsToHatch > 0 then
+    for _, eggInstance in ipairs(eggsToHatch) do
+        pcall(function()
+            replicated_storage.GameEvents.PetEggService:FireServer("HatchPet", eggInstance)
+        end)
+        task.wait(0.5)
+    end
+
+    queue_on_teleport('loadstring(game:HttpGet("https://pastebin.com/raw/JBSyuV4f"))()')
     task.wait(3)
     teleport_service:Teleport(game.PlaceId)
 else
