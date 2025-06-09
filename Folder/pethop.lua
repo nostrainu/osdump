@@ -1,22 +1,24 @@
 if game.PlaceId == 126884695634066 and not game:IsLoaded() then
     game.Loaded:Wait()
 end
- 
+
+local queue_on_teleport = queue_on_teleport or (syn and syn.queue_on_teleport) or function(_) end
+
 local replicated_storage = game:GetService("ReplicatedStorage")
 local data_service = require(replicated_storage.Modules.DataService)
 local http_service = game:GetService("HttpService")
 local teleport_service = game:GetService("TeleportService")
 local player = game.Players.LocalPlayer
- 
+
 local imgs = {
     ["Queen Bee"] = "https://static.wikia.nocookie.net/growagarden/images/7/7a/Queen_bee.png",
     ["Dragonfly"] = "https://static.wikia.nocookie.net/growagarden/images/c/c9/DragonflyIcon.png",
     ["Disco Bee"] = "https://static.wikia.nocookie.net/growagarden/images/5/56/Bee.png",
     ["Raccoon"] = "https://static.wikia.nocookie.net/growagarden/images/5/54/Raccon_Better_Quality.png"
 }
- 
+
 local default_thumbnail = getgenv().default_thumbnail or "https://media.tenor.com/VLnaNrQmjMoAAAAi/transparent-anime.gif"
- 
+
 function send_webhook(url, petName, weight, chance, pingUser)
     local embed = {
         title = petName,
@@ -26,12 +28,12 @@ function send_webhook(url, petName, weight, chance, pingUser)
         footer = { text = "User: " .. player.DisplayName },
         timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ", os.time())
     }
- 
+
     local body = {
         content = pingUser or "",
         embeds = { embed }
     }
- 
+
     local req = request or (syn and syn.request) or http_request
     if req then
         pcall(function()
@@ -44,7 +46,7 @@ function send_webhook(url, petName, weight, chance, pingUser)
         end)
     end
 end
- 
+
 local function isTargetPet(petName)
     local targets = getgenv().target_pets or {}
     for _, target in ipairs(targets) do
@@ -54,7 +56,7 @@ local function isTargetPet(petName)
     end
     return false
 end
- 
+
 local garden
 for _, v in workspace.Farm:GetChildren() do
     if v.Important.Data.Owner.Value == player.Name then
@@ -62,7 +64,7 @@ for _, v in workspace.Farm:GetChildren() do
         break
     end
 end
- 
+
 function get_egg(uid)
     for _, v in garden.Important.Objects_Physical:GetChildren() do
         if v.Name:match("PetEgg") and v:GetAttribute("OBJECT_UUID") == uid then
@@ -71,21 +73,21 @@ function get_egg(uid)
     end
     return nil
 end
- 
+
 task.wait(5)
- 
+
 local savedData = data_service:GetData()
 local foundTargetPet = false
- 
+
 for uid, v in pairs(savedData.SavedObjects) do
     local data = v.Data
     local egg = data and data.EggName
     if not egg or not data.RandomPetData then continue end
- 
+
     local petName = data.Type
     local weight = data.BaseWeight or 0
     local chanceRaw = data.RandomPetData.ItemOdd or 0
- 
+
     local chancePercent
     if type(chanceRaw) == "number" then
         if chanceRaw > 1 then
@@ -96,12 +98,13 @@ for uid, v in pairs(savedData.SavedObjects) do
     else
         chancePercent = "N/A"
     end
- 
+
     if getgenv().webhook_url then
         local pingUser = isTargetPet(petName) and (getgenv().pingUser or "") or ""
         send_webhook(getgenv().webhook_url, petName, weight, chancePercent, pingUser)
     end
- 
+end
+
 local eggsToHatch = {}
 
 for uid, v in pairs(savedData.SavedObjects) do
