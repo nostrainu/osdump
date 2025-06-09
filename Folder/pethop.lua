@@ -18,7 +18,6 @@ local imgs = {
 }
 
 local default_thumbnail = getgenv().default_thumbnail or "https://media.tenor.com/VLnaNrQmjMoAAAAi/transparent-anime.gif"
-local noEggsThumbnail = "https://i.redd.it/1c331cu6ypj71.gif"
 
 function send_webhook(url, petName, weight, chance, pingUser)
     local embed = {
@@ -40,36 +39,6 @@ function send_webhook(url, petName, weight, chance, pingUser)
         pcall(function()
             req({
                 Url = url .. "?wait=true",
-                Method = "POST",
-                Headers = { ["Content-Type"] = "application/json" },
-                Body = http_service:JSONEncode(body)
-            })
-        end)
-    end
-end
-
-local function sendNoEggsWebhook()
-    if not getgenv().webhook_url then return end
-
-    local embed = {
-        title = "No Eggs to Hatch",
-        description = "There are currently no eggs available to hatch.",
-        color = 0xff0000,
-        thumbnail = { url = noEggsThumbnail },
-        footer = { text = "User: " .. player.DisplayName },
-        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ", os.time())
-    }
-
-    local body = {
-        content = "",
-        embeds = { embed }
-    }
-
-    local req = request or (syn and syn.request) or http_request
-    if req then
-        pcall(function()
-            req({
-                Url = getgenv().webhook_url .. "?wait=true",
                 Method = "POST",
                 Headers = { ["Content-Type"] = "application/json" },
                 Body = http_service:JSONEncode(body)
@@ -121,19 +90,18 @@ for uid, v in pairs(savedData.SavedObjects) do
 
     local chancePercent
     if type(chanceRaw) == "number" then
-        if chanceRaw >= 1 then
-            chancePercent = string.format("%.1f%%", chanceRaw)
-        else
-            chancePercent = string.format("%.1f%%", chanceRaw * 100)
-        end
+    if chanceRaw >= 1 then
+        chancePercent = string.format("%.1f%%", chanceRaw)
     else
-        chancePercent = "N/A"
+        chancePercent = string.format("%.1f%%", chanceRaw * 100)
     end
+else
+    chancePercent = "N/A"
+end
 
-    if getgenv().webhook_url then
-        local pingUser = isTargetPet(petName) and (getgenv().pingUser or "") or ""
-        send_webhook(getgenv().webhook_url, petName, weight, chancePercent, pingUser)
-    end
+if getgenv().webhook_url then
+    local pingUser = isTargetPet(petName) and (getgenv().pingUser or "") or ""
+    send_webhook(getgenv().webhook_url, petName, weight, chancePercent, pingUser)
 end
 
 local eggsToHatch = {}
@@ -160,6 +128,10 @@ if #eggsToHatch > 0 then
         task.wait(0.5)
     end
 
+    queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/pethop.lua"))()')
+    task.wait(3)
+    teleport_service:Teleport(game.PlaceId)
+else
     local tpCD = string.format([[
         getgenv().webhook_url = %q
         getgenv().target_pets = %s
@@ -167,13 +139,6 @@ if #eggsToHatch > 0 then
         loadstring(game:HttpGet("https://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/pethop.lua"))()
     ]], getgenv().webhook_url or "", http_service:JSONEncode(getgenv().target_pets or {}), getgenv().pingUser or "")
 
-    queue_on_teleport(function()
-        loadstring(tpCD)()
-    end)
-
-    task.wait(3)
+    queue_on_teleport(tpCD)
     teleport_service:Teleport(game.PlaceId)
-else
-    sendNoEggsWebhook() 
-    return
 end
