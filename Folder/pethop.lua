@@ -90,19 +90,18 @@ for uid, v in pairs(savedData.SavedObjects) do
 
     local chancePercent
     if type(chanceRaw) == "number" then
-        if chanceRaw > 1 then
-            chancePercent = string.format("%.1f%%", chanceRaw)
-        else
-            chancePercent = string.format("%.1f%%", chanceRaw * 100)
-        end
+    if chanceRaw >= 1 then
+        chancePercent = string.format("%.1f%%", chanceRaw)
     else
-        chancePercent = "N/A"
+        chancePercent = string.format("%.1f%%", chanceRaw * 100)
     end
+else
+    chancePercent = "N/A"
+end
 
-    if getgenv().webhook_url then
-        local pingUser = isTargetPet(petName) and (getgenv().pingUser or "") or ""
-        send_webhook(getgenv().webhook_url, petName, weight, chancePercent, pingUser)
-    end
+if getgenv().webhook_url then
+    local pingUser = isTargetPet(petName) and (getgenv().pingUser or "") or ""
+    send_webhook(getgenv().webhook_url, petName, weight, chancePercent, pingUser)
 end
 
 local eggsToHatch = {}
@@ -129,7 +128,7 @@ if #eggsToHatch > 0 then
         task.wait(0.5)
     end
 
-    queue_on_teleport('loadstring(game:HttpGet("https://pastebin.com/raw/JBSyuV4f"))()')
+    queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/nostrainu/osdump/refs/heads/main/Folder/pethop.lua"))()')
     task.wait(3)
     teleport_service:Teleport(game.PlaceId)
 else
