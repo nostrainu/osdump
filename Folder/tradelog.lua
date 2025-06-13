@@ -1,10 +1,14 @@
+-- 🔁 Cleanup previous instance if script re-executed
+if getgenv()._giftTrackerCleanup then
+	getgenv()._giftTrackerCleanup()
+end
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 local RefreshActivePetsUI = ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("RefreshActivePetsUI")
-
 local req = (syn and syn.request) or http_request or request
 
 -- 🧳 Get only Age pets from backpack
@@ -30,7 +34,7 @@ local function formatInventory(inv)
 	end
 
 	local lines = {}
-	local maxLines = 20 -- limit to avoid Discord embed overflow
+	local maxLines = 20
 	local shown = 0
 	for name, count in pairs(counts) do
 		table.insert(lines, string.format("• **%s** × %d", name, count))
@@ -77,7 +81,7 @@ local function sendWebhook(oldInv, newInv, displayName)
 		{
 			title = "🎁 Trade Tracker",
 			description = string.format("**%s** has accepted a pet gift!", displayName),
-			color = 16753920, -- warm gold
+			color = 16753920,
 			fields = {
 				{
 					name = "✨ Newly Received Pets",
@@ -105,24 +109,20 @@ local function sendWebhook(oldInv, newInv, displayName)
 		local messageId = getgenv().last_message_id
 
 		if messageId then
-			-- ✏️ Edit existing message
+			-- Edit existing message
 			local editUrl = webhookUrl .. "/messages/" .. messageId
 			req({
 				Url = editUrl,
 				Method = "PATCH",
-				Headers = {
-					["Content-Type"] = "application/json"
-				},
+				Headers = { ["Content-Type"] = "application/json" },
 				Body = payload
 			})
 		else
-			-- 📨 Send new message
+			-- Send new message
 			local response = req({
 				Url = webhookUrl,
 				Method = "POST",
-				Headers = {
-					["Content-Type"] = "application/json"
-				},
+				Headers = { ["Content-Type"] = "application/json" },
 				Body = payload
 			})
 
@@ -141,8 +141,9 @@ local function sendWebhook(oldInv, newInv, displayName)
 	end
 end
 
--- 🧠 Listen for gift acceptance
-RefreshActivePetsUI.OnClientEvent:Connect(function()
+-- 👂 Listen for gift acceptance
+local connection
+connection = RefreshActivePetsUI.OnClientEvent:Connect(function()
 	local raw = getgenv().receiever
 	local receiver = typeof(raw) == "Instance" and raw or Players:FindFirstChild(raw or "")
 	if receiver then
@@ -152,3 +153,13 @@ RefreshActivePetsUI.OnClientEvent:Connect(function()
 		sendWebhook(before, after, receiver.DisplayName)
 	end
 end)
+
+-- 🧹 Setup cleanup for next execution
+getgenv()._giftTrackerCleanup = function()
+	if connection then
+		connection:Disconnect()
+	end
+	getgenv()._giftTrackerCleanup = nil
+end
+
+print("✅ Trade Tracker loaded. Previous instance cleaned.")
