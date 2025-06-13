@@ -69,11 +69,11 @@ local function getNewPets(oldInv, newInv)
 	return #lines > 0 and table.concat(lines, "\n") or "_Nothing new_"
 end
 
--- Send webhook
-local function sendWebhook(oldInv, newInv, displayName, userId)
+-- Send or edit webhook
+local function sendWebhook(oldInv, newInv, displayName)
 	local embed = {
 		{
-			title = "🎁 Trade Success!",
+			title = "🎁 Trade Tracker",
 			description = "**" .. displayName .. "** has accepted a pet gift!",
 			color = 16753920,
 			fields = {
@@ -86,12 +86,9 @@ local function sendWebhook(oldInv, newInv, displayName, userId)
 					value = formatInventory(newInv)
 				}
 			},
-			thumbnail = {
-				url = "https://thumbnails.roproxy.com/v1/users/avatar-headshot?userIds=" .. tostring(userId) .. "&size=420x420&format=Png&isCircular=true"
-			},
 			timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
 			footer = {
-				text = "Gift Tracker"
+				text = "gift tracker by @Lei"
 			}
 		}
 	}
@@ -103,14 +100,37 @@ local function sendWebhook(oldInv, newInv, displayName, userId)
 
 	local webhookUrl = getgenv().webhook_url
 	if typeof(req) == "function" and typeof(webhookUrl) == "string" then
-		req({
-			Url = webhookUrl,
-			Method = "POST",
-			Headers = {
-				["Content-Type"] = "application/json"
-			},
-			Body = payload
-		})
+		local messageId = getgenv().last_message_id
+
+		if messageId then
+			-- PATCH edit existing message
+			local editUrl = webhookUrl .. "/messages/" .. messageId
+			req({
+				Url = editUrl,
+				Method = "PATCH",
+				Headers = {
+					["Content-Type"] = "application/json"
+				},
+				Body = payload
+			})
+		else
+			-- POST new message
+			local response = req({
+				Url = webhookUrl,
+				Method = "POST",
+				Headers = {
+					["Content-Type"] = "application/json"
+				},
+				Body = payload
+			})
+
+			-- Save message ID for future edits
+			local body = response.Body
+			if body then
+				local decoded = HttpService:JSONDecode(body)
+				getgenv().last_message_id = decoded.id
+			end
+		end
 	end
 end
 
@@ -122,6 +142,6 @@ RefreshActivePetsUI.OnClientEvent:Connect(function()
 		local before = getAgeInventory(receiver)
 		task.wait(0.5)
 		local after = getAgeInventory(receiver)
-		sendWebhook(before, after, receiver.DisplayName, receiver.UserId)
+		sendWebhook(before, after, receiver.DisplayName)
 	end
 end)
