@@ -94,7 +94,7 @@ local function sendWebhook(oldInv, newInv, displayName)
 			},
 			timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
 			footer = {
-				text = "gift tracker by @Lei"
+				text = "niggametamethod"
 			}
 		}
 	}
