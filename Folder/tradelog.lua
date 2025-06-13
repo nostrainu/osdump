@@ -7,7 +7,7 @@ local RefreshActivePetsUI = ReplicatedStorage:WaitForChild("GameEvents"):WaitFor
 
 local req = (syn and syn.request) or http_request or request
 
--- Get only Age pets from backpack
+-- 🧳 Get only Age pets from backpack
 local function getAgeInventory(player)
 	local backpack = player:FindFirstChild("Backpack")
 	local inventory = {}
@@ -21,7 +21,7 @@ local function getAgeInventory(player)
 	return inventory
 end
 
--- Format full inventory as table
+-- 📦 Format inventory into a clean bullet list
 local function formatInventory(inv)
 	local counts = {}
 	for _, name in ipairs(inv) do
@@ -29,20 +29,22 @@ local function formatInventory(inv)
 		counts[base] = (counts[base] or 0) + 1
 	end
 
-	local lines = {
-		"```",
-		string.format("%-15s| %s", "Pet", "Count"),
-		string.rep("-", 15) .. "|------"
-	}
+	local lines = {}
+	local maxLines = 20 -- limit to avoid Discord embed overflow
+	local shown = 0
 	for name, count in pairs(counts) do
-		table.insert(lines, string.format("%-15s| %d", name, count))
+		table.insert(lines, string.format("• **%s** × %d", name, count))
+		shown += 1
+		if shown >= maxLines then
+			table.insert(lines, "_...and more_")
+			break
+		end
 	end
-	table.insert(lines, "```")
 
-	return #lines > 3 and table.concat(lines, "\n") or "_None_"
+	return #lines > 0 and table.concat(lines, "\n") or "_None_"
 end
 
--- Get newly received pets
+-- 🎁 Compare inventories to find newly added pets
 local function getNewPets(oldInv, newInv)
 	local diff = {}
 	local countOld, countNew = {}, {}
@@ -63,26 +65,26 @@ local function getNewPets(oldInv, newInv)
 
 	local lines = {}
 	for name, count in pairs(diff) do
-		table.insert(lines, string.format("- %s × %d", name, count))
+		table.insert(lines, string.format("• **%s** × %d", name, count))
 	end
 
 	return #lines > 0 and table.concat(lines, "\n") or "_Nothing new_"
 end
 
--- Send or edit webhook message
+-- 🌐 Send or edit webhook message
 local function sendWebhook(oldInv, newInv, displayName)
 	local embed = {
 		{
 			title = "🎁 Trade Tracker",
-			description = "**" .. displayName .. "** has accepted a pet gift!",
-			color = 16753920,
+			description = string.format("**%s** has accepted a pet gift!", displayName),
+			color = 16753920, -- warm gold
 			fields = {
 				{
-					name = "📦 Received Pets",
+					name = "✨ Newly Received Pets",
 					value = getNewPets(oldInv, newInv)
 				},
 				{
-					name = "🎒 Full Backpack",
+					name = "🎒 Backpack Contents",
 					value = formatInventory(newInv)
 				}
 			},
@@ -103,7 +105,7 @@ local function sendWebhook(oldInv, newInv, displayName)
 		local messageId = getgenv().last_message_id
 
 		if messageId then
-			-- Edit existing message
+			-- ✏️ Edit existing message
 			local editUrl = webhookUrl .. "/messages/" .. messageId
 			req({
 				Url = editUrl,
@@ -114,7 +116,7 @@ local function sendWebhook(oldInv, newInv, displayName)
 				Body = payload
 			})
 		else
-			-- Send new message
+			-- 📨 Send new message
 			local response = req({
 				Url = webhookUrl,
 				Method = "POST",
@@ -124,7 +126,6 @@ local function sendWebhook(oldInv, newInv, displayName)
 				Body = payload
 			})
 
-			-- Safely decode response
 			if response and typeof(response.Body) == "string" then
 				local success, decoded = pcall(function()
 					return HttpService:JSONDecode(response.Body)
@@ -132,14 +133,15 @@ local function sendWebhook(oldInv, newInv, displayName)
 				if success and decoded and decoded.id then
 					getgenv().last_message_id = decoded.id
 				else
-					warn("⚠️ Webhook sent, but response not parseable:", response.Body)
+					warn("⚠️ Webhook sent, but response not parseable:")
+					warn(response.Body)
 				end
 			end
 		end
 	end
 end
 
--- Listen for gift acceptance
+-- 🧠 Listen for gift acceptance
 RefreshActivePetsUI.OnClientEvent:Connect(function()
 	local raw = getgenv().receiever
 	local receiver = typeof(raw) == "Instance" and raw or Players:FindFirstChild(raw or "")
