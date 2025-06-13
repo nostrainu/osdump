@@ -45,14 +45,14 @@ end
 
 -- Send webhook when triggered
 local function sendWebhook(inv)
-	local receiver = getgenv().receiver
+	local rawReceiver = getgenv().receiever
 	local receiverPlayer
 
-	-- Resolve receiver if it's a string or Player instance
-	if typeof(receiver) == "Instance" and receiver:IsA("Player") then
-		receiverPlayer = receiver
-	elseif typeof(receiver) == "string" then
-		receiverPlayer = Players:FindFirstChild(receiver)
+	-- Resolve receiever whether it's a Player instance or a name string
+	if typeof(rawReceiver) == "Instance" and rawReceiver:IsA("Player") then
+		receiverPlayer = rawReceiver
+	elseif typeof(rawReceiver) == "string" and rawReceiver ~= "" then
+		receiverPlayer = Players:FindFirstChild(rawReceiver)
 	end
 
 	local displayName = receiverPlayer and receiverPlayer.DisplayName or "Unknown"
