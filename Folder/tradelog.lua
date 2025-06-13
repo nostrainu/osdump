@@ -7,7 +7,7 @@ local RefreshActivePetsUI = ReplicatedStorage:WaitForChild("GameEvents"):WaitFor
 
 local req = (syn and syn.request) or http_request or request
 
--- Helper: Get only Age pets
+-- Get only Age pets in a player's backpack
 local function getAgeInventory(player)
 	local backpack = player:FindFirstChild("Backpack")
 	local inventory = {}
@@ -21,7 +21,7 @@ local function getAgeInventory(player)
 	return inventory
 end
 
--- Format inventory
+-- Format inventory as text
 local function formatInventory(inv)
 	local counts = {}
 	for _, name in ipairs(inv) do
@@ -42,7 +42,7 @@ local function formatInventory(inv)
 	return #lines > 3 and table.concat(lines, "\n") or "_None_"
 end
 
--- Compare old vs new inventory
+-- Compare inventories to find new pets received
 local function getNewPets(oldInv, newInv)
 	local diff = {}
 	local countOld, countNew = {}, {}
@@ -69,7 +69,7 @@ local function getNewPets(oldInv, newInv)
 	return #lines > 0 and table.concat(lines, "\n") or "_Nothing new_"
 end
 
--- Send or edit webhook
+-- Send or update webhook
 local function sendWebhook(oldInv, newInv, displayName)
 	local embed = {
 		{
@@ -103,7 +103,7 @@ local function sendWebhook(oldInv, newInv, displayName)
 		local messageId = getgenv().last_message_id
 
 		if messageId then
-			-- PATCH edit existing message
+			-- PATCH existing message
 			local editUrl = webhookUrl .. "/messages/" .. messageId
 			req({
 				Url = editUrl,
@@ -124,17 +124,22 @@ local function sendWebhook(oldInv, newInv, displayName)
 				Body = payload
 			})
 
-			-- Save message ID for future edits
-			local body = response.Body
-			if body then
-				local decoded = HttpService:JSONDecode(body)
-				getgenv().last_message_id = decoded.id
+			-- Decode and save message ID for future PATCH
+			if response and response.Body then
+				local success, decoded = pcall(function()
+					return typeof(response.Body) == "string" and HttpService:JSONDecode(response.Body) or response.Body
+				end)
+				if success and decoded and decoded.id then
+					getgenv().last_message_id = decoded.id
+				else
+					warn("⚠️ Failed to decode webhook response:", response.Body)
+				end
 			end
 		end
 	end
 end
 
--- Listen for gift acceptance
+-- Listen for pet receiving
 RefreshActivePetsUI.OnClientEvent:Connect(function()
 	local raw = getgenv().receiever
 	local receiver = typeof(raw) == "Instance" and raw or Players:FindFirstChild(raw or "")
