@@ -45,7 +45,7 @@ end
 
 -- Send webhook when triggered
 local function sendWebhook(inv)
-	local rawReceiver = getgenv().receiever
+	local rawReceiver = getgenv().receiver
 	local receiverPlayer
 
 	-- Resolve receiever whether it's a Player instance or a name string
