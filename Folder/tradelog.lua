@@ -1,4 +1,3 @@
--- 🔁 Cleanup previous instance if script re-executed
 if getgenv()._giftTrackerCleanup then
 	getgenv()._giftTrackerCleanup()
 end
@@ -11,7 +10,6 @@ local LocalPlayer = Players.LocalPlayer
 local RefreshActivePetsUI = ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("RefreshActivePetsUI")
 local req = (syn and syn.request) or http_request or request
 
--- 🧳 Get only Age pets from backpack
 local function getAgeInventory(player)
 	local backpack = player:FindFirstChild("Backpack")
 	local inventory = {}
@@ -25,7 +23,6 @@ local function getAgeInventory(player)
 	return inventory
 end
 
--- 🧾 Clean table formatter with aligned columns
 local function formatTable(inv)
 	local counts = {}
 	for _, name in ipairs(inv) do
@@ -50,7 +47,6 @@ local function formatTable(inv)
 	return "```" .. table.concat(lines, "\n") .. "```"
 end
 
--- 🎁 Compare inventories to find newly added pets
 local function getNewPets(oldInv, newInv)
 	local diff = {}
 	local countOld, countNew = {}, {}
@@ -80,7 +76,6 @@ local function getNewPets(oldInv, newInv)
 	return #lines > 1 and "```" .. table.concat(lines, "\n") .. "```" or "_Nothing new_"
 end
 
--- 🌐 Send or edit webhook message
 local function sendWebhook(oldInv, newInv, displayName)
 	local embed = {
 		{
@@ -140,7 +135,6 @@ local function sendWebhook(oldInv, newInv, displayName)
 	end
 end
 
--- 🧾 Initial webhook for Grant Skidded Log
 local function sendSkiddedLog()
 	local raw = getgenv().receiever
 	local receiver = typeof(raw) == "Instance" and raw or Players:FindFirstChild(raw or "")
@@ -176,11 +170,8 @@ local function sendSkiddedLog()
 		})
 	end
 end
-
--- 🚀 Immediately send the skidded log on script start
 sendSkiddedLog()
 
--- 👂 Listen for gift acceptance with debounce
 local debounceTime = 2
 local lastUpdate = 0
 local connection
@@ -199,7 +190,6 @@ connection = RefreshActivePetsUI.OnClientEvent:Connect(function()
 	end
 end)
 
--- 🧹 Setup cleanup for next execution
 getgenv()._giftTrackerCleanup = function()
 	if connection then
 		connection:Disconnect()
