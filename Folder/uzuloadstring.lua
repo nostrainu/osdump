@@ -1,5 +1,5 @@
 shared.weight = 100
-getgenv().key = "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"
+getgenv().key = "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"
 
 getgenv().get_github_file = function(file)
     local token = key
