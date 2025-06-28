@@ -1,4 +1,4 @@
-getgenv().key = "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"
+getgenv().key = "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"
 
 getgenv().get_github_file = function(file)
     local token = key
