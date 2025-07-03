@@ -2,6 +2,11 @@
 --// Open Sauce
 if game.PlaceId ~= 126884695634066 then return end
 
+--// grant grant grant
+if getgenv().uiUpd then
+    getgenv().uiUpd:Unload()
+end
+
 --// Library and Config
 local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
@@ -40,6 +45,7 @@ local Window = Library:CreateWindow({
     ShowCustomCursor = false,
 })
 
+getgenv().uiUpd = Library 
 
 --// Tabs
 local Tabs = {
@@ -103,11 +109,19 @@ task.spawn(function()
                             for _, cd in ipairs(cooldowns) do
                                 local time = tonumber(cd.Time)
                                 if time and time >= 79 and time <= 81 and not getgenv().AutoIdle then
-                                    print("Idle = True")
+                                    Library:Notify({
+                                        Title = "Auto Idle",
+                                        Description = "True",
+                                        Time = 3,
+                                    })
                                     getgenv().AutoIdle = true
                                     task.delay(10, function()
                                         getgenv().AutoIdle = false
-                                        print("Idle = False(10s)")
+                                        Library:Notify({
+                                            Title = "Auto Idle",
+                                            Description = "False",
+                                            Time = 3,
+                                        })
                                     end)
                                     break
                                 end
@@ -122,6 +136,7 @@ task.spawn(function()
         task.wait(1)
     end
 end)
+
 
 --// Menu
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
@@ -163,4 +178,5 @@ ThemeManager:ApplyToTab(Tabs["UI Settings"])
 
 Library:OnUnload(function()
     uiActive = false
+    getgenv().uiUpd = nil
 end)
