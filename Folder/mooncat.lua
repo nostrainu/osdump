@@ -48,7 +48,7 @@ Library.ShowToggleFrameInKeybinds = true
 
 local Window = Library:CreateWindow({
     Title = "Grant",
-    Footer = "please donate via GCash :<",
+    Footer = "please donate via GCash",
     MobileButtonsSide = "Left",
     NotifySide = "Right",
     Center = true,
