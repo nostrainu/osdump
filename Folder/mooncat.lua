@@ -28,7 +28,7 @@ Library.ShowToggleFrameInKeybinds = true
 
 local Window = Library:CreateWindow({
     Title = "Grant",
-    Footer = "v0.01",
+    Footer = "please donate via GCash :<",
     MobileButtonsSide = "Left",
     NotifySide = "Right",
     Center = true,
@@ -98,7 +98,7 @@ task.spawn(function()
                         if ok and typeof(cooldowns) == "table" then
                             for _, cd in ipairs(cooldowns) do
                                 local time = tonumber(cd.Time)
-                                if time and time <= 76 and time >= 73 and not getgenv().AutoIdle then
+                                if time and time >= 79 and time <= 81 and not getgenv().AutoIdle then
                                     print("Idle = True")
                                     getgenv().AutoIdle = true
                                     task.delay(10, function()
