@@ -1,3 +1,7 @@
+--// GaG 
+--// Open Sauce
+if game.PlaceId ~= 126884695634066 then return end
+
 --// Library and Config
 local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
