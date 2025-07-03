@@ -14,24 +14,35 @@ local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))
 local http = game:GetService("HttpService")
 local folder, path = "grangrant", "grant/config.json"
 
+--// Defaults
 local defaults = {
     AutoIdle = false,
+    AutoIdleToggle = false,
 }
 
+--// Save/Load Functions
 local function save()
     if not isfolder(folder) then makefolder(folder) end
     writefile(path, http:JSONEncode(config))
 end
 
+--// Load Config 
 local config = isfile(path) and http:JSONDecode(readfile(path)) or {}
 
+--// Apply Config 
 for k, v in pairs(defaults) do
     config[k] = config[k] == nil and v or config[k]
     getgenv()[k] = config[k]
 end
 
+--// Runtime Reset 
+getgenv().AutoIdle = false
+getgenv().AutoIdleToggle = config.AutoIdleToggle or false
+
+--// Store Config
 getgenv().config = config
 
+--// Library
 Library.ForceCheckbox = false
 Library.ShowToggleFrameInKeybinds = true
 
