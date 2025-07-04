@@ -83,8 +83,18 @@ LeftGroupBox:AddToggle("MoonCat", {
     end
 })
 
---// Modules and Services
+LeftGroupBox:AddDivider()
+
+LeftGroupBox:AddButton("ShovelSprinkler", {
+    Text = "Shovel Sprinkler",
+    Func = getgenv().AutoShovel,
+    DoubleClick = false
+})
+
+--// Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+--// Modules & Remotes
 local GetPetCooldown = ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("GetPetCooldown")
 local IdleHandler = require(ReplicatedStorage.Modules.PetServices.PetActionUserInterfaceService.PetActionsHandlers.Idle)
 
@@ -148,6 +158,60 @@ task.spawn(function()
     end
 end)
 
+--// Auto Shovel
+getgenv().AutoShovel = function()
+    local Players = game:GetService("Players")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local backpack = player:WaitForChild("Backpack")
+    local DeleteObject = ReplicatedStorage.GameEvents:WaitForChild("DeleteObject")
+
+    local function EquipShovel()
+        local equippedTool = character:FindFirstChildWhichIsA("Tool")
+        if equippedTool and equippedTool.Name == "Shovel [Destroy Plants]" then return true end
+
+        local shovel = character:FindFirstChild("Shovel [Destroy Plants]") or backpack:FindFirstChild("Shovel [Destroy Plants]")
+        if shovel then
+            shovel.Parent = character
+            player.Character.Humanoid:EquipTool(shovel)
+            return true
+        end
+        return false
+    end
+
+    local function UnequipShovel()
+        local equippedTool = character:FindFirstChildWhichIsA("Tool")
+        if equippedTool and equippedTool.Name == "Shovel [Destroy Plants]" then
+            equippedTool.Parent = backpack
+        end
+    end
+
+    local garden
+    for _, plot in pairs(workspace.Farm:GetChildren()) do
+        if plot:FindFirstChild("Important")
+            and plot.Important:FindFirstChild("Data")
+            and plot.Important.Data.Owner.Value == player.Name then
+            garden = plot
+            break
+        end
+    end
+    if not garden then return end
+
+    if not EquipShovel() then return end
+
+    local objectsFolder = garden.Important:FindFirstChild("Objects_Physical")
+    if not objectsFolder then return end
+
+    for _, model in ipairs(objectsFolder:GetChildren()) do
+        if model:IsA("Model") and string.find(model.Name, "Sprinkler") then
+            DeleteObject:FireServer(model)
+            task.wait(0.2)
+        end
+    end
+
+    UnequipShovel()
+end
 
 --// Menu
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
