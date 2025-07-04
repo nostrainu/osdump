@@ -163,7 +163,11 @@ getgenv().AutoShovel = function()
     local Players = game:GetService("Players")
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local player = Players.LocalPlayer
+
     local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid", 5)
+    if not humanoid then return end
+
     local backpack = player:WaitForChild("Backpack")
     local DeleteObject = ReplicatedStorage.GameEvents:WaitForChild("DeleteObject")
 
@@ -174,7 +178,7 @@ getgenv().AutoShovel = function()
         local shovel = character:FindFirstChild("Shovel [Destroy Plants]") or backpack:FindFirstChild("Shovel [Destroy Plants]")
         if shovel then
             shovel.Parent = character
-            player.Character.Humanoid:EquipTool(shovel)
+            humanoid:EquipTool(shovel)
             return true
         end
         return false
@@ -188,17 +192,30 @@ getgenv().AutoShovel = function()
     end
 
     local garden
-    for _, plot in pairs(workspace.Farm:GetChildren()) do
-        if plot:FindFirstChild("Important")
-            and plot.Important:FindFirstChild("Data")
-            and plot.Important.Data.Owner.Value == player.Name then
-            garden = plot
-            break
+    local startTime = tick()
+    repeat
+        garden = nil
+        for _, plot in pairs(workspace.Farm:GetChildren()) do
+            if plot:FindFirstChild("Important")
+               and plot.Important:FindFirstChild("Data")
+               and plot.Important.Data.Owner.Value == player.Name then
+                garden = plot
+                break
+            end
         end
-    end
+        if garden then break end
+        task.wait(0.5)
+    until tick() - startTime > 5
     if not garden then return end
 
-    if not EquipShovel() then return end
+    local success = EquipShovel()
+    local attempts = 0
+    while not success and attempts < 5 do
+        task.wait(0.5)
+        success = EquipShovel()
+        attempts = attempts + 1
+    end
+    if not success then return end
 
     local objectsFolder = garden.Important:FindFirstChild("Objects_Physical")
     if not objectsFolder then return end
@@ -212,6 +229,7 @@ getgenv().AutoShovel = function()
 
     UnequipShovel()
 end
+
 
 --// Menu
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
