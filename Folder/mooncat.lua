@@ -94,6 +94,16 @@ CGL1:AddLabel({
 })
 
 CGL1:AddLabel({
+    Text = "  ▶ Added Weight Input",
+    DoesWrap = true
+})
+
+CGL1:AddLabel({
+    Text = "",
+    DoesWrap = true
+})
+
+CGL1:AddLabel({
     Text = "• Added Vulnerabilities Tab",
     DoesWrap = true
 })
@@ -109,14 +119,6 @@ CGL1:AddLabel({
 })
 
 --// Services & Setup
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local player = Players.LocalPlayer
-local backpack = player:WaitForChild("Backpack")
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-
---// Services
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
@@ -144,10 +146,9 @@ local function getUniquePetNames()
     return names
 end
 
---// Misc
 local MSC = Tabs.Misc:AddLeftGroupbox("Sell Pets", "chevron-right")
 
-local petDropdown = MSC:AddDropdown("SellPet", {
+MSC:AddDropdown("SellPet", {
     Values = getUniquePetNames(),
     Default = getgenv().selectedPets or {},
     Multi = true,
@@ -157,6 +158,14 @@ local petDropdown = MSC:AddDropdown("SellPet", {
         config.selectedPets = selected
         save()
     end
+})
+
+MSC:AddInput("PetKgInput", {
+    Text = "Weight",
+    Default = getgenv().PetKgInput,
+    Numeric = true,
+    Finished = true,
+    Placeholder = "Enter Weight Threshold"
 })
 
 MSC:AddToggle("SellPetToggle", {
@@ -172,6 +181,7 @@ task.spawn(function()
         task.wait(5)
         local updatedList = getUniquePetNames()
         local preserved = {}
+
         if getgenv().selectedPets then
             for _, name in ipairs(updatedList) do
                 if getgenv().selectedPets[name] then
@@ -180,8 +190,11 @@ task.spawn(function()
             end
         end
 
-        petDropdown:SetValues(updatedList)
-        petDropdown:SetValue(preserved)
+        if petDropdown then
+            petDropdown:SetValues(updatedList)
+            petDropdown:SetValue(preserved)
+        end
+
         getgenv().selectedPets = preserved
     end
 end)
@@ -192,13 +205,20 @@ task.spawn(function()
 
         if not getgenv().autoSellEnabled or not getgenv().selectedPets then continue end
 
+        local weightThreshold = tonumber(getgenv().PetKgInput) or 0
+
         for petName, isSelected in pairs(getgenv().selectedPets) do
             if isSelected then
                 for _, tool in ipairs(backpack:GetChildren()) do
                     if tool:IsA("Tool") and tool.Name:find("^" .. petName) then
-                        tool.Parent = character
-                        humanoid:EquipTool(tool)
-                        ReplicatedStorage.GameEvents.SellPet_RE:FireServer(tool)
+                        local weightStr = tool.Name:match("%[(%d+%.?%d*) KG%]")
+                        local weight = tonumber(weightStr or "0")
+
+                        if weight and weight < weightThreshold then
+                            tool.Parent = character
+                            humanoid:EquipTool(tool)
+                            ReplicatedStorage.GameEvents.SellPet_RE:FireServer(tool)
+                        end
                     end
                 end
             end
