@@ -152,6 +152,7 @@ MSC:AddDropdown("SellPet", {
     Values = getUniquePetNames(),
     Default = getgenv().selectedPets or {},
     Multi = true,
+    Searchable = true,
     Text = "Select Pets to Sell",
     Callback = function(selected)
         getgenv().selectedPets = selected
