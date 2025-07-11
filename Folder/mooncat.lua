@@ -8,9 +8,9 @@ if getgenv().uiUpd then
 end
 
 --// Library and Config
-local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
-local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
-local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
+local repo = "https://raw.githubusercontent.com/nostrainu/dumps/main/"
+local Library = loadstring(game:HttpGet(repo .. "obsidiandeividadditions.lua"))()
+local ThemeManager = loadstring(game:HttpGet(repo .. "addons/Thememanager.lua"))()
 local http = game:GetService("HttpService")
 local folder, path = "grangrant", "grant/config.json"
 
@@ -48,10 +48,11 @@ Library.ShowToggleFrameInKeybinds = true
 
 local Window = Library:CreateWindow({
     Title = "Grant",
-    Footer = "please donate via GCash",
+    Footer = "v0.2",
     MobileButtonsSide = "Left",
     NotifySide = "Right",
     Center = true,
+    Resizable = false,
     Size = Library.IsMobile and UDim2.fromOffset(450, 300) or UDim2.fromOffset(650, 500),
     ShowCustomCursor = false,
 })
@@ -60,17 +61,32 @@ getgenv().uiUpd = Library
 
 --// Tabs
 local Tabs = {
-    Main = Window:AddTab("Main", "user"),
-    ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
+    Changelog = Window:AddTab("Changelog", "file-clock"),
+    Vuln = Window:AddTab("Vuln", "focus"),
+    ["Settings"] = Window:AddTab("Settings", "settings"),
 }
 
---// Main Functionalities
+--// uiActive
 local uiActive = true
 
---// Menu
-local LeftGroupBox = Tabs.Main:AddLeftGroupbox("Idle")
+--// Changelog
+local CGL = Tabs.Changelog:AddFullGroupbox("v0.1", "square-check-big")
+local CGL1 = Tabs.Changelog:AddFullGroupbox("v0.2", "square-check-big")
 
-LeftGroupBox:AddToggle("MoonCat", {
+CGL:AddLabel({
+    Text = "▶ Added Moon Cat Idle",
+    DoesWrap = true
+})
+
+CGL1:AddLabel({
+    Text = "▶ Added Remove Sprinkler",
+    DoesWrap = true
+})
+
+--// Vuln
+local VLN = Tabs.Vuln:AddLeftGroupbox("Idle")
+
+VLN:AddToggle("MoonCat", {
     Text = "Auto Idle",
     Default = getgenv().AutoIdleToggle,
     Callback = function(val)
@@ -83,10 +99,10 @@ LeftGroupBox:AddToggle("MoonCat", {
     end
 })
 
-LeftGroupBox:AddDivider()
+VLN:AddDivider()
 
 --// Auto Shovel
-LeftGroupBox:AddButton("ShovelSprinkler", {
+VLN:AddButton("ShovelSprinkler", {
     Text = "Shovel Sprinkler",
     Func = function()
         local Players = game:GetService("Players")
@@ -213,7 +229,7 @@ task.spawn(function()
 end)
 
 --// Menu
-local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
+local MenuGroup = Tabs["Settings"]:AddLeftGroupbox("Menu")
 
 MenuGroup:AddDropdown("NotificationSide", {
     Values = { "Left", "Right" },
@@ -248,7 +264,7 @@ Library.ToggleKeybind = Library.Options.MenuKeybind
 
 ThemeManager:SetLibrary(Library)
 ThemeManager:SetFolder("hikochairs")
-ThemeManager:ApplyToTab(Tabs["UI Settings"])
+ThemeManager:ApplyToTab(Tabs["Settings"])
 
 Library:OnUnload(function()
     uiActive = false
