@@ -8,8 +8,9 @@ if getgenv().uiUpd then
 end
 
 --// Library and Config
-local repo = "https://raw.githubusercontent.com/nostrainu/dumps/main/"
-local Library = loadstring(game:HttpGet(repo .. "obsidiandeividadditions.lua"))()
+local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
+local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
+local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local http = game:GetService("HttpService")
 local folder, path = "grangrant", "grant/config.json"
 
@@ -17,7 +18,6 @@ local folder, path = "grangrant", "grant/config.json"
 local defaults = {
     AutoIdle = false,
     AutoIdleToggle = false,
-    selectedPets = {},
 }
 
 --// Save/Load Functions
@@ -48,7 +48,7 @@ Library.ShowToggleFrameInKeybinds = true
 
 local Window = Library:CreateWindow({
     Title = "Grant",
-    Footer = "v0.2",
+    Footer = "please donate via GCash",
     MobileButtonsSide = "Left",
     NotifySide = "Right",
     Center = true,
@@ -60,177 +60,17 @@ getgenv().uiUpd = Library
 
 --// Tabs
 local Tabs = {
-    Changelog = Window:AddTab("Changelog", "file-clock"),
-    Misc = Window:AddTab("Misc", "notebook-pen"),
-    Vuln = Window:AddTab("Vuln", "focus"),
-    ["Settings"] = Window:AddTab("Settings", "settings"),
+    Main = Window:AddTab("Main", "user"),
+    ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
---// uiActive
+--// Main Functionalities
 local uiActive = true
 
---// Changelog
-local CGL = Tabs.Changelog:AddFullGroupbox("v0.1", "square-check-big")
-local CGL1 = Tabs.Changelog:AddFullGroupbox("v0.2", "square-check-big")
+--// Menu
+local LeftGroupBox = Tabs.Main:AddLeftGroupbox("Idle")
 
-CGL:AddLabel({
-    Text = "• Added Moon Cat Idle",
-    DoesWrap = true
-})
-
-CGL:AddLabel({
-    Text = "• Added Remove Sprinkler",
-    DoesWrap = true
-})
-
-CGL1:AddLabel({
-    Text = "• Added Miscellaneous Tab",
-    DoesWrap = true
-})
-
-CGL1:AddLabel({
-    Text = "  ▶ Added Sell Pets",
-    DoesWrap = true
-})
-
-CGL1:AddLabel({
-    Text = "  ▶ Added Weight Input",
-    DoesWrap = true
-})
-
-CGL1:AddLabel({
-    Text = "",
-    DoesWrap = true
-})
-
-CGL1:AddLabel({
-    Text = "• Added Vulnerabilities Tab",
-    DoesWrap = true
-})
-
-CGL1:AddLabel({
-    Text = "  ▶ Moved Moon Cat Idle to Vuln",
-    DoesWrap = true
-})
-
-CGL1:AddLabel({
-    Text = "  ▶ Moved Remove Sprinkler to Vuln",
-    DoesWrap = true
-})
-
---// Services & Setup
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local player = Players.LocalPlayer
-local backpack = player:WaitForChild("Backpack")
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-
-local function getUniquePetNames()
-    local names = {}
-    local seen = {}
-
-    for _, container in ipairs({backpack, character}) do
-        for _, tool in ipairs(container:GetChildren()) do
-            if tool:IsA("Tool") and tool.Name:find("Age") then
-                local base = tool.Name:match("^(.-) %[%d") or tool.Name
-                if not seen[base] then
-                    seen[base] = true
-                    table.insert(names, base)
-                end
-            end
-        end
-    end
-
-    table.sort(names)
-    return names
-end
-
-local MSC = Tabs.Misc:AddLeftGroupbox("Sell Pets", "chevron-right")
-
-MSC:AddDropdown("SellPet", {
-    Values = getUniquePetNames(),
-    Default = getgenv().selectedPets or {},
-    Multi = true,
-    Searchable = true,
-    Text = "Select Pets to Sell",
-    Callback = function(selected)
-        getgenv().selectedPets = selected
-        config.selectedPets = selected
-        save()
-    end
-})
-
-MSC:AddInput("PetKgInput", {
-    Text = "Weight",
-    Default = getgenv().PetKgInput,
-    Numeric = true,
-    Finished = true,
-    Placeholder = "Enter Weight Threshold"
-})
-
-MSC:AddToggle("SellPetToggle", {
-    Text = "Enable Auto Sell",
-    Default = false,
-    Callback = function(val)
-        getgenv().autoSellEnabled = val
-    end
-})
-
-task.spawn(function()
-    while uiActive do
-        task.wait(5)
-        local updatedList = getUniquePetNames()
-        local preserved = {}
-
-        if getgenv().selectedPets then
-            for _, name in ipairs(updatedList) do
-                if getgenv().selectedPets[name] then
-                    preserved[name] = true
-                end
-            end
-        end
-
-        if petDropdown then
-            petDropdown:SetValues(updatedList)
-            petDropdown:SetValue(preserved)
-        end
-
-        getgenv().selectedPets = preserved
-    end
-end)
-
-task.spawn(function()
-    while uiActive do
-        task.wait(1)
-
-        if not getgenv().autoSellEnabled or not getgenv().selectedPets then continue end
-
-        local weightThreshold = tonumber(getgenv().PetKgInput) or 0
-
-        for petName, isSelected in pairs(getgenv().selectedPets) do
-            if isSelected then
-                for _, tool in ipairs(backpack:GetChildren()) do
-                    if tool:IsA("Tool") and tool.Name:find("^" .. petName) then
-                        local weightStr = tool.Name:match("%[(%d+%.?%d*) KG%]")
-                        local weight = tonumber(weightStr or "0")
-
-                        if weight and weight < weightThreshold then
-                            tool.Parent = character
-                            humanoid:EquipTool(tool)
-                            ReplicatedStorage.GameEvents.SellPet_RE:FireServer(tool)
-                        end
-                    end
-                end
-            end
-        end
-    end
-end)
-
---// Vuln
-local VLN = Tabs.Vuln:AddLeftGroupbox("Idle", "chevron-right")
-
-VLN:AddToggle("MoonCat", {
+LeftGroupBox:AddToggle("MoonCat", {
     Text = "Auto Idle",
     Default = getgenv().AutoIdleToggle,
     Callback = function(val)
@@ -243,12 +83,17 @@ VLN:AddToggle("MoonCat", {
     end
 })
 
-VLN:AddDivider()
+LeftGroupBox:AddDivider()
 
 --// Auto Shovel
-VLN:AddButton("ShovelSprinkler", {
+LeftGroupBox:AddButton("ShovelSprinkler", {
     Text = "Shovel Sprinkler",
     Func = function()
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local player = Players.LocalPlayer
+
+        local character, backpack = player.Character or player.CharacterAdded:Wait(), player:WaitForChild("Backpack")
         local DeleteObject = ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("DeleteObject")
 
         local function EquipShovel()
@@ -259,7 +104,7 @@ VLN:AddButton("ShovelSprinkler", {
             local shovel = character:FindFirstChild("Shovel [Destroy Plants]") or backpack:FindFirstChild("Shovel [Destroy Plants]")
             if shovel then
                 shovel.Parent = character
-                humanoid:EquipTool(shovel)
+                player.Character.Humanoid:EquipTool(shovel)
                 return true
             end
             return false
@@ -300,10 +145,14 @@ VLN:AddButton("ShovelSprinkler", {
     DoubleClick = false
 })
 
---// Auto Idle
+--// Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+--// Modules & Remotes
 local GetPetCooldown = ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("GetPetCooldown")
 local IdleHandler = require(ReplicatedStorage.Modules.PetServices.PetActionUserInterfaceService.PetActionsHandlers.Idle)
 
+--// Auto Idle
 task.spawn(function()
     while uiActive do
         if getgenv().AutoIdle then
@@ -320,7 +169,7 @@ task.spawn(function()
     end
 end)
 
---// Echo Frog Logic
+--// Echo Frog
 task.spawn(function()
     while uiActive do
         if getgenv().AutoIdleToggle then 
@@ -364,7 +213,7 @@ task.spawn(function()
 end)
 
 --// Menu
-local MenuGroup = Tabs["Settings"]:AddFullGroupbox("Menu", "menu")
+local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
 
 MenuGroup:AddDropdown("NotificationSide", {
     Values = { "Left", "Right" },
@@ -396,6 +245,10 @@ MenuGroup:AddButton("Unload", function()
 end)
 
 Library.ToggleKeybind = Library.Options.MenuKeybind
+
+ThemeManager:SetLibrary(Library)
+ThemeManager:SetFolder("hikochairs")
+ThemeManager:ApplyToTab(Tabs["UI Settings"])
 
 Library:OnUnload(function()
     uiActive = false
