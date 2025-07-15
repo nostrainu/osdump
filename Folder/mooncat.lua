@@ -19,6 +19,7 @@ local folder, path = "grangrant", "grant/config.json"
 local defaults = {
     AutoIdle = false,
     AutoIdleToggle = false,
+    idleDrop = {}
 }
 
 --// Save/Load Functions
@@ -70,6 +71,18 @@ local uiActive = true
 
 --// Menu
 local LeftGroupBox = Tabs.Main:AddLeftGroupbox("Idle")
+
+LeftGroupBox:AddDropdown("IdleDropdown", {
+    Values = { "Moon Cat", "Capybara" },
+    Default = getgenv().idleDrop or {},
+    Multi = true,
+    Text = "Select Pet",
+    Callback = function(selected)
+        getgenv().idleDrop = selected
+        config.idleDrop = selected
+        save()
+    end
+})
 
 LeftGroupBox:AddToggle("MoonCat", {
     Text = "Auto Idle",
@@ -148,20 +161,50 @@ LeftGroupBox:AddButton("ShovelSprinkler", {
 
 --// Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
 --// Modules & Remotes
 local GetPetCooldown = ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("GetPetCooldown")
 local IdleHandler = require(ReplicatedStorage.Modules.PetServices.PetActionUserInterfaceService.PetActionsHandlers.Idle)
+local ActivePetsService = require(ReplicatedStorage.Modules.PetServices.ActivePetsService)
 
---// Auto Idle
+--// Capybara
+task.spawn(function()
+    while uiActive do
+        if getgenv().AutoIdleToggle then
+            for _, petPart in pairs(workspace.PetsPhysical:GetChildren()) do
+                if petPart:IsA("BasePart") and petPart.Name == "PetMover" then
+                    local uuid = petPart:GetAttribute("UUID")
+                    local owner = petPart:GetAttribute("OWNER")
+
+                    if owner == LocalPlayer.Name and uuid then
+                        local petData = ActivePetsService:GetPetData(owner, uuid)
+                        if petData and petData.PetType == "Capybara" then
+                            task.spawn(IdleHandler.Activate, petPart)
+                        end
+                    end
+                end
+            end
+        end
+        task.wait(1)
+    end
+end)
+
+--// Moon Cat
 task.spawn(function()
     while uiActive do
         if getgenv().AutoIdle then
-            for _, v in ipairs(workspace.PetsPhysical:GetChildren()) do
-                if v:IsA("BasePart") and v.Name == "PetMover" then
-                    local model = v:FindFirstChild(v:GetAttribute("UUID"))
-                    if model and model:IsA("Model") and model:GetAttribute("CurrentSkin") == "Moon Cat" then
-                        task.spawn(IdleHandler.Activate, v)
+            for _, petPart in pairs(workspace.PetsPhysical:GetChildren()) do
+                if petPart:IsA("BasePart") and petPart.Name == "PetMover" then
+                    local uuid = petPart:GetAttribute("UUID")
+                    local owner = petPart:GetAttribute("OWNER")
+
+                    if owner == LocalPlayer.Name and uuid then
+                        local petData = ActivePetsService:GetPetData(owner, uuid)
+                        if petData and petData.PetType == "Moon Cat" then
+                            task.spawn(IdleHandler.Activate, petPart)
+                        end
                     end
                 end
             end
@@ -170,36 +213,39 @@ task.spawn(function()
     end
 end)
 
---// Echo Frog
+--// Listener
 task.spawn(function()
     while uiActive do
         if getgenv().AutoIdleToggle then 
-            for _, v in ipairs(workspace.PetsPhysical:GetChildren()) do
-                if v:IsA("BasePart") and v.Name == "PetMover" then
-                    local uuid = v:GetAttribute("UUID")
-                    local model = uuid and v:FindFirstChild(uuid)
+            for _, mover in pairs(workspace.PetsPhysical:GetChildren()) do
+                if mover:IsA("BasePart") and mover.Name == "PetMover" then
+                    local uuid = mover:GetAttribute("UUID")
+                    local owner = mover:GetAttribute("OWNER")
 
-                    if model and model:IsA("Model") and model:GetAttribute("CurrentSkin") == nil then
-                        local ok, cooldowns = pcall(GetPetCooldown.InvokeServer, GetPetCooldown, uuid)
-                        if ok and typeof(cooldowns) == "table" then
-                            for _, cd in ipairs(cooldowns) do
-                                local time = tonumber(cd.Time)
-                                if time and time >= 79 and time <= 81 and not getgenv().AutoIdle then
-                                    Library:Notify({
-                                        Title = "Auto Idle",
-                                        Description = "True",
-                                        Time = 3,
-                                    })
-                                    getgenv().AutoIdle = true
-                                    task.delay(10, function()
-                                        getgenv().AutoIdle = false
+                    if uuid and owner == LocalPlayer.Name then
+                        local petData = ActivePetsService:GetPetData(owner, uuid)
+                        if petData and petData.PetType == "Echo Frog" then
+                            local ok, cooldowns = pcall(GetPetCooldown.InvokeServer, GetPetCooldown, uuid)
+                            if ok and typeof(cooldowns) == "table" then
+                                for _, cd in pairs(cooldowns) do
+                                    local time = tonumber(cd.Time)
+                                    if time and time >= 79 and time <= 81 and not getgenv().AutoIdle then
                                         Library:Notify({
                                             Title = "Auto Idle",
-                                            Description = "False",
+                                            Description = "Moon Cat Enabled",
                                             Time = 3,
                                         })
-                                    end)
-                                    break
+                                        getgenv().AutoIdle = true
+                                        task.delay(10, function()
+                                            getgenv().AutoIdle = false
+                                            Library:Notify({
+                                                Title = "Auto Idle",
+                                                Description = "Moon Cat Disabled",
+                                                Time = 3,
+                                            })
+                                        end)
+                                        break
+                                    end
                                 end
                             end
                         end
