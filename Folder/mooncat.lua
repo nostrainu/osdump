@@ -252,7 +252,7 @@ task.spawn(function()
                                     if time and time >= targetTime - 1 and time <= targetTime + 1 and not getgenv().AutoIdle then
                                         Library:Notify({
                                             Title = "Auto Idle",
-                                            Description = petData.PetType .. " Enabled",
+                                            Description = "True",
                                             Time = 3,
                                         })
                                         getgenv().AutoIdle = true
@@ -260,7 +260,7 @@ task.spawn(function()
                                             getgenv().AutoIdle = false
                                             Library:Notify({
                                                 Title = "Auto Idle",
-                                                Description = petData.PetType .. " Disabled",
+                                                Description = "False",
                                                 Time = 3,
                                             })
                                         end)
