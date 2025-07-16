@@ -224,7 +224,7 @@ task.spawn(function()
 
                     if uuid and owner == LocalPlayer.Name then
                         local petData = ActivePetsService:GetPetData(owner, uuid)
-                        if petData and petData.PetType == "Echo Frog" then
+                        if petData and (petData.PetType == "Echo Frog" or petData.PetType == "Triceratops") then
                             local ok, cooldowns = pcall(GetPetCooldown.InvokeServer, GetPetCooldown, uuid)
                             if ok and typeof(cooldowns) == "table" then
                                 for _, cd in pairs(cooldowns) do
@@ -232,7 +232,7 @@ task.spawn(function()
                                     if time and time >= 79 and time <= 81 and not getgenv().AutoIdle then
                                         Library:Notify({
                                             Title = "Auto Idle",
-                                            Description = "Moon Cat Enabled",
+                                            Description = petData.PetType .. " Enabled",
                                             Time = 3,
                                         })
                                         getgenv().AutoIdle = true
@@ -240,7 +240,7 @@ task.spawn(function()
                                             getgenv().AutoIdle = false
                                             Library:Notify({
                                                 Title = "Auto Idle",
-                                                Description = "Moon Cat Disabled",
+                                                Description = petData.PetType .. " Disabled",
                                                 Time = 3,
                                             })
                                         end)
