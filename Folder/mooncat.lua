@@ -1,3 +1,4 @@
+
 --// GaG 
 --// Open Sauce
 --// https://guns.lol/kidgrant
@@ -19,7 +20,8 @@ local folder, path = "grangrant", "grant/config.json"
 local defaults = {
     AutoIdle = false,
     AutoIdleToggle = false,
-    idleDrop = {}
+    idleDrop = {},
+    idleInput = 0,
 }
 
 --// Save/Load Functions
@@ -81,6 +83,24 @@ LeftGroupBox:AddDropdown("IdleDropdown", {
         getgenv().idleDrop = selected
         config.idleDrop = selected
         save()
+    end
+})
+
+LeftGroupBox:AddInput("IdleInput", {
+    Text = "Cooldown in Seconds",
+    Default = "80",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "Cooldown in Seconds",
+    Callback = function(val)
+        local num = tonumber(val)
+        if num then
+            getgenv().idleInput = num
+            config.idleInput = num
+            save()
+        else
+            getgenv().idleInput = nil  
+        end
     end
 })
 
@@ -229,7 +249,8 @@ task.spawn(function()
                             if ok and typeof(cooldowns) == "table" then
                                 for _, cd in pairs(cooldowns) do
                                     local time = tonumber(cd.Time)
-                                    if time and time >= 79 and time <= 81 and not getgenv().AutoIdle then
+                                    local targetTime = tonumber(getgenv().idleInput) or 80
+                                    if time and time >= targetTime - 1 and time <= targetTime + 1 and not getgenv().AutoIdle then
                                         Library:Notify({
                                             Title = "Auto Idle",
                                             Description = petData.PetType .. " Enabled",
