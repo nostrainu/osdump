@@ -8,14 +8,20 @@ local LocalPlayer = Players.LocalPlayer
 local wp = game.Workspace
 local fd = wp:WaitForChild("Live"):WaitForChild("Friends")
 
-getgenv().AutoFarm = false 
-getgenv().lbs = getgenv().lbs or nil
+getgenv().AutoFarm = false
+getgenv().lbs = nil
 
 local returnPart = workspace:WaitForChild("NewMapFully")
     :WaitForChild("BaseGround")
     :WaitForChild("GroundSign")
 
 local function teleportAndFire(model)
+    if not getgenv().AutoFarm
+    or not getgenv().lbs
+    or not table.find(getgenv().lbs, model.Name) then
+        return false
+    end
+
     local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
 
@@ -26,7 +32,9 @@ local function teleportAndFire(model)
     task.wait(0.15)
 
     for _, d in pairs(model:GetDescendants()) do
-        if d:IsA("ProximityPrompt") and d.Enabled then
+        if d:IsA("ProximityPrompt")
+        and d.Enabled
+        and d:IsDescendantOf(model) then
             fireproximityprompt(d)
             break
         end
@@ -47,8 +55,7 @@ task.spawn(function()
             for _, name in ipairs(getgenv().lbs) do
                 for _, model in pairs(fd:GetChildren()) do
                     if model:IsA("Model") and model.Name == name then
-                        local success = teleportAndFire(model)
-                        if success then
+                        if teleportAndFire(model) then
                             anyFound = true
                             task.wait(0.2)
                         end
