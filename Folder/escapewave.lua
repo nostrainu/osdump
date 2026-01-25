@@ -8,14 +8,14 @@ local LocalPlayer = Players.LocalPlayer
 local wp = game.Workspace
 local fd = wp:WaitForChild("Live"):WaitForChild("Friends")
 
-getgenv().AutoFarm = true
-getgenv().lbs = getgenv().lbs or nil
+getgenv().AutoFarm = true 
+getgenv().lbs = getgenv().lbs or nil 
 
 local returnPart = workspace:WaitForChild("NewMapFully")
     :WaitForChild("BaseGround")
     :WaitForChild("GroundSign")
 
-local function tpfire(model)
+local function teleportAndFire(model)
     if not getgenv().AutoFarm then return false end
 
     local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
@@ -46,43 +46,44 @@ local function tpfire(model)
     return true
 end
 
-local function farmLoop()
-    while getgenv().AutoFarm do
-        if not getgenv().lbs then
-            task.wait(0.5)
-            continue
-        end
+while true do
+    if not getgenv().AutoFarm then
+        task.wait(0.5)
+        continue
+    end
 
-        local anyFound = false
+    if not getgenv().lbs then
+        task.wait(0.5)
+        continue
+    end
 
-        for _, name in pairs(getgenv().lbs) do
+    local anyFound = false
+
+    for _, name in ipairs(getgenv().lbs) do
+        if not getgenv().AutoFarm then break end
+        local collect = true
+
+        while collect do
             if not getgenv().AutoFarm then break end
-            local collect = true
+            collect = false
 
-            while collect do
+            for _, model in pairs(fd:GetChildren()) do
                 if not getgenv().AutoFarm then break end
-                collect = false
-
-                for _, model in pairs(fd:GetChildren()) do
-                    if not getgenv().AutoFarm then break end
-                    if model:IsA("Model") and model.Name == name then
-                        local success = tpfire(model)
-                        if success then
-                            collect = true
-                            anyFound = true
-                            break
-                        end
+                if model:IsA("Model") and model.Name == name then
+                    local success = teleportAndFire(model)
+                    if success then
+                        collect = true
+                        anyFound = true
+                        break
                     end
                 end
-
-                task.wait(0.2)
             end
-        end
 
-        if not anyFound then
-            task.wait(0.5)
+            task.wait(0.2)
         end
     end
-end
 
-task.spawn(farmLoop)
+    if not anyFound then
+        task.wait(0.5)
+    end
+end
