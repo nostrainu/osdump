@@ -9,7 +9,7 @@ local wp = game.Workspace
 local fd = wp:WaitForChild("Live"):WaitForChild("Friends")
 
 getgenv().AutoFarm = false 
-getgenv().lbs = getgenv().lbs or {"Exclusive Lucky Block"} 
+getgenv().lbs = getgenv().lbs or nil
 
 local returnPart = workspace:WaitForChild("NewMapFully")
     :WaitForChild("BaseGround")
