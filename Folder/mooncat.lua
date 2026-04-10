@@ -1,9 +1,8 @@
 --// GaG 
 --// Open Sauce
---// https://guns.lol/kidgrant
 if game.PlaceId ~= 126884695634066 then return end
 
---// grant grant grant
+--// y
 if getgenv().uiUpd then
     getgenv().uiUpd:Unload()
 end
