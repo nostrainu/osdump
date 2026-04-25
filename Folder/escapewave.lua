@@ -1,5 +1,4 @@
---// Bai ka po ba?
---// grant grant grant
+-- // y
 
 if game.PlaceId ~= 119579217517090 then return end
 
