@@ -67,9 +67,9 @@ local function getTarget()
     local nearest, shortestDistance = nil, math.huge
     for _, zombie in pairs(zombiesFolder:GetChildren()) do
         if zombie:IsA("Model") and zombie:FindFirstChild("Config") and zombie.Config.Health.Value > 0 then
-            local p = zombie.PrimaryPart or zombie:FindFirstChild("HumanoidRootPart")
-            if p then
-                local dist = (rootPart.Position - p.Position).Magnitude
+            local root = zombie:FindFirstChild("HumanoidRootPart")
+            if root then
+                local dist = (rootPart.Position - root.Position).Magnitude
                 if dist < shortestDistance then
                     nearest, shortestDistance = zombie, dist
                 end
@@ -88,7 +88,7 @@ task.spawn(function()
                 remote:FireServer("Ability", i, "Slot1", getgenv().Config.AbilityClass, "Began")
             end
         end
-        task.wait(0.05)
+        task.wait(0.1)
     end
 end)
 
