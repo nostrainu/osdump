@@ -65,7 +65,8 @@ end
 
 local function getTarget()
     local nearest, shortestDistance = nil, math.huge
-    for _, zombie in pairs(zombiesFolder:GetChildren()) do
+    local currentZombies = workspace:FindFirstChild("Zombies") or zombiesFolder
+    for _, zombie in pairs(currentZombies:GetChildren()) do
         if zombie:IsA("Model") and zombie:FindFirstChild("Config") and zombie.Config.Health.Value > 0 then
             local root = zombie:FindFirstChild("HumanoidRootPart")
             if root then
@@ -78,6 +79,17 @@ local function getTarget()
     end
     return nearest
 end
+
+player.CharacterAdded:Connect(function(newChar)
+    character = newChar
+    rootPart = character:WaitForChild("HumanoidRootPart")
+    humanoid = character:WaitForChild("Humanoid")
+    animate = character:WaitForChild("Animate", 5)
+    task.wait(0.1)
+    if getgenv().Config.Enabled then
+        managePhysics(true)
+    end
+end)
 
 task.spawn(function()
     while getgenv().Config.Enabled do
