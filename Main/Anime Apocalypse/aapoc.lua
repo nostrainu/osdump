@@ -39,7 +39,9 @@ local function managePhysics(active)
     if active then
         humanoid.AutoRotate = false
         if animate then animate.Disabled = true end
-        for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do track:Stop() end
+        pcall(function()
+            for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do track:Stop() end
+        end)
         humanoid:ChangeState(Enum.HumanoidStateType.Physics)
         
         if not existingBV then
@@ -64,6 +66,7 @@ local function managePhysics(active)
 end
 
 local function getTarget()
+    if not rootPart or not rootPart.Parent or not humanoid or humanoid.Health <= 0 then return nil end
     local nearest, shortestDistance = nil, math.huge
     local currentZombies = workspace:FindFirstChild("Zombies") or zombiesFolder
     for _, zombie in pairs(currentZombies:GetChildren()) do
@@ -96,9 +99,10 @@ task.spawn(function()
         local target = getTarget()
         if target then
             remote:FireServer("M1", getgenv().Config.Class, os.time())
-            for i = 1, 4 do
-                local slot = i <= 4 and ("Slot" .. i) or nil
-                remote:FireServer("Ability", i, slot, getgenv().Config.AbilityClass, "Began")
+            for skillNum = 1, 4 do
+                for slotNum = 1, 4 do
+                    remote:FireServer("Ability", skillNum, "Slot" .. slotNum, getgenv().Config.AbilityClass, "Began")
+                end
             end
         end
         task.wait(0.1)
