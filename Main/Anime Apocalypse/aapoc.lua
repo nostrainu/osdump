@@ -96,8 +96,8 @@ task.spawn(function()
         local target = getTarget()
         if target then
             remote:FireServer("M1", getgenv().Config.Class, os.time())
-            for i = 1, 3 do
-                remote:FireServer("Ability", i, "Slot1", getgenv().Config.AbilityClass, "Began")
+            for i = 1, 4 do
+                remote:FireServer("Ability", i, i, getgenv().Config.AbilityClass, "Began")
             end
         end
         task.wait(0.1)
